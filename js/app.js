@@ -6,7 +6,7 @@
   // =====================================================================
   // Basics
   // =====================================================================
-  var BAR = 96;
+  var BAR = 84;
   function $(id) { return document.getElementById(id); }
   function W() { return window.innerWidth; }
   function H() { return window.innerHeight; }
@@ -27,7 +27,8 @@
   }
   function place(e, x, y, w, h) {
     e.style.left = Math.round(x) + 'px'; e.style.top = Math.round(y) + 'px';
-    e.style.width = Math.round(w) + 'px'; e.style.height = Math.round(h) + 'px';
+    if (w !== undefined) { e.style.width = Math.round(w) + 'px'; }
+    if (h !== undefined) { e.style.height = Math.round(h) + 'px'; }
   }
   function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
   function store(key, val) {
@@ -37,26 +38,20 @@
     } catch (e) {}
     return null;
   }
-  function restartAnim(e, cls) {
-    e.className = e.className.replace(new RegExp(' ' + cls, 'g'), '');
-    void e.offsetWidth;
-    e.className += ' ' + cls;
-  }
   function hasClass(e, c) { return (' ' + e.className + ' ').indexOf(' ' + c + ' ') >= 0; }
   function addClass(e, c) { if (!hasClass(e, c)) { e.className += ' ' + c; } }
   function removeClass(e, c) { e.className = (' ' + e.className + ' ').replace(' ' + c + ' ', ' ').replace(/^\s+|\s+$/g, ''); }
+  function restartAnim(e, cls) { removeClass(e, cls); void e.offsetWidth; addClass(e, cls); }
+  function setTransform(e, v) { e.style.webkitTransform = v; e.style.transform = v; }
 
-  // Picture (Twemoji SVG). Emoji text cannot be drawn large on iOS 9, pictures can.
+  // Pictures (Twemoji SVG files). Emoji text cannot be drawn large on iOS 9, pictures can.
   function pic(code, size) {
     size = Math.floor(size);
     return '<img src="e/' + code + '.svg" alt="" style="position:absolute;left:50%;top:50%;width:' + size +
       'px;height:' + size + 'px;margin:' + (-size / 2) + 'px 0 0 ' + (-size / 2) + 'px">';
   }
-  function inlinePic(code, size) {
-    return '<img src="e/' + code + '.svg" alt="" style="width:' + size + 'px;height:' + size + 'px">';
-  }
+  function img(code, size) { return '<img src="e/' + code + '.svg" alt="" style="width:' + size + 'px;height:' + size + 'px">'; }
 
-  // Simple line icons.
   var SVGA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">';
   var ICON = {
     back: SVGA + '<path d="M15 4.5L7.5 12l7.5 7.5"/></svg>',
@@ -66,26 +61,26 @@
       '<path d="M16 8.5a5 5 0 0 1 0 7M18.8 5.8a9 9 0 0 1 0 12.4" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>',
     play: '<svg viewBox="0 0 24 24"><path fill="#fff" d="M7 4.5c0-1 1-1.5 1.8-1L20 10.6c.8.6.8 1.8 0 2.4L8.8 20.5c-.8.5-1.8 0-1.8-1z"/></svg>',
     playSmall: '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M7 4.5c0-1 1-1.5 1.8-1L20 10.6c.8.6.8 1.8 0 2.4L8.8 20.5c-.8.5-1.8 0-1.8-1z"/></svg>',
-    trash: SVGA + '<path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13"/></svg>',
-    random: SVGA + '<path d="M4 7h3c5 0 5 10 10 10h3M17 14l3 3-3 3M4 17h3c1.5 0 2.5-.8 3.3-2M13.7 9c.8-1.2 1.8-2 3.3-2h3M17 4l3 3-3 3"/></svg>'
+    trash: SVGA + '<path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13"/></svg>'
   };
   function star(filled) {
-    return '<svg viewBox="0 0 24 24"><path fill="' + (filled ? '#ffc93c' : '#ece5f5') + '" stroke="' + (filled ? '#e5a90f' : '#ddd3ea') +
+    return '<svg viewBox="0 0 24 24"><path fill="' + (filled ? '#ffc93c' : 'rgba(255,255,255,0.55)') + '" stroke="' + (filled ? '#e5a90f' : 'rgba(150,130,170,0.35)') +
       '" stroke-width="1.2" stroke-linejoin="round" d="M12 2.6l2.9 5.9 6.5.9-4.7 4.6 1.1 6.4L12 17.4l-5.8 3 1.1-6.4-4.7-4.6 6.5-.9z"/></svg>';
   }
 
   // Touch handling.
-  // onPress: for buttons; fires when the finger lifts (needed so iOS 9 allows sound).
-  // onDown: for game play; fires immediately when the finger touches.
+  // onPress: buttons; fires when the finger lifts (iOS 9 only allows sound to start then).
+  // onDown: game play; fires as soon as the finger touches.
   function onPress(e, fn) {
     var sx = 0, sy = 0;
     e.addEventListener('touchstart', function (ev) { var t = ev.changedTouches[0]; sx = t.clientX; sy = t.clientY; }, false);
     e.addEventListener('touchend', function (ev) {
-      ev.preventDefault();
+      ev.preventDefault(); ev.stopPropagation();
       var t = ev.changedTouches[0];
-      if (Math.abs(t.clientX - sx) < 40 && Math.abs(t.clientY - sy) < 40) { unlockAudio(); fn(ev); }
+      unlockAudio();
+      if (Math.abs(t.clientX - sx) < 40 && Math.abs(t.clientY - sy) < 40) { fn(ev); }
     }, false);
-    e.addEventListener('click', function (ev) { unlockAudio(); fn(ev); }, false);
+    e.addEventListener('click', function (ev) { ev.stopPropagation(); unlockAudio(); fn(ev); }, false);
   }
   function onDown(e, fn) {
     e.addEventListener('touchstart', function (ev) {
@@ -100,20 +95,28 @@
   // =====================================================================
   // Sound
   // =====================================================================
-  var actx = null;
+  // Web Audio on old iPads is treated as "ambient" sound and is silenced by the mute setting.
+  // Playing a silent <audio> track in a loop moves the page to "media" sound (like YouTube),
+  // which is not muted.
+  var actx = null, silentAudio = null;
   function unlockAudio() {
+    try {
+      if (!silentAudio) {
+        silentAudio = new Audio('sounds/silence.wav');
+        silentAudio.loop = true;
+      }
+      if (silentAudio.paused) { var p = silentAudio.play(); if (p && p['catch']) { p['catch'](function () {}); } }
+    } catch (e) {}
     var AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) { return; }
     if (!actx) {
       actx = new AC();
-      // Play a silent sound inside the touch: this unlocks audio on iOS.
       var buf = actx.createBuffer(1, 1, 22050), src = actx.createBufferSource();
       src.buffer = buf; src.connect(actx.destination);
       if (src.start) { src.start(0); } else { src.noteOn(0); }
     }
     if (actx.state === 'suspended' && actx.resume) { actx.resume(); }
   }
-  // iOS 9 only unlocks audio on touchend, so listen for it everywhere.
   document.addEventListener('touchend', unlockAudio, false);
   document.addEventListener('mouseup', unlockAudio, false);
 
@@ -137,6 +140,8 @@
     good: function () { tone(523, 0.18, 'triangle', 0.35); tone(659, 0.18, 'triangle', 0.35, 0, 0.12); tone(784, 0.3, 'triangle', 0.35, 0, 0.24); },
     bad: function () { tone(300, 0.25, 'sine', 0.25, 200); },
     swoosh: function () { tone(900, 0.35, 'sine', 0.2, 150); },
+    whoosh: function () { tone(250, 0.4, 'sine', 0.18, 500); },
+    fill: function () { tone(400, 0.25, 'sine', 0.3, 800); },
     fanfare: function () { each([523, 659, 784, 1047, 784, 1047], function (f, i) { tone(f, 0.28, 'triangle', 0.35, 0, i * 0.14); }); }
   };
 
@@ -169,11 +174,41 @@
   function where(a) { return T().where.replace('{x}', aName(a)); }
 
   var COLORS = ['#ef4b5c', '#ff8a2a', '#ffd23f', '#3fc27a', '#3b8beb', '#8f5ce0', '#ff7eb6', '#9a6236'];
-  var NOTES = [262, 294, 330, 349, 392, 440, 494, 523];
+  var PASTELS = ['#ffd6dc', '#ffe3c7', '#fff1b8', '#d4f5df', '#d6e8ff', '#e8dcff', '#ffdcee', '#f0e2d4'];
+
+  // Piano: 10 white keys, G3 to B4.
+  // key index: 0 G3, 1 A3, 2 B3, 3 C4, 4 D4, 5 E4, 6 F4, 7 G4, 8 A4, 9 B4
+  var NOTES = [196, 220, 247, 262, 294, 330, 349, 392, 440, 494];
+  var KEY_COLORS = ['#ef4b5c', '#ff6f3c', '#ff9f1c', '#ffd23f', '#9ed84b', '#3fc27a', '#2ec4b6', '#3b8beb', '#8f5ce0', '#ff7eb6'];
   var SONGS = [
-    [0, 1, 2, 0, 0, 1, 2, 0, 2, 3, 4, 2, 3, 4],
-    [0, 0, 4, 4, 5, 5, 4, 3, 3, 2, 2, 1, 1, 0],
-    [0, 0, 0, 1, 2, 1, 0, 2, 1, 1, 0]
+    { flag: '1f1eb-1f1f7', n: { fr: 'Frère Jacques', en: 'Frère Jacques', de: 'Bruder Jakob', ru: 'Братец Яков' },
+      notes: [3, 4, 5, 3, 3, 4, 5, 3, 5, 6, 7, 5, 6, 7, 7, 8, 7, 6, 5, 3, 7, 8, 7, 6, 5, 3, 3, 0, 3, 3, 0, 3] },
+    { flag: '1f1eb-1f1f7', n: { fr: 'Ah ! vous dirai-je maman', en: 'Twinkle Twinkle Little Star', de: 'Morgen kommt der Weihnachtsmann', ru: 'Ах, скажу я вам, мама' },
+      notes: [3, 3, 7, 7, 8, 8, 7, 6, 6, 5, 5, 4, 4, 3, 7, 7, 6, 6, 5, 5, 4, 7, 7, 6, 6, 5, 5, 4, 3, 3, 7, 7, 8, 8, 7, 6, 6, 5, 5, 4, 4, 3] },
+    { flag: '1f1eb-1f1f7', n: { fr: 'Au clair de la lune', en: 'Au clair de la lune', de: 'Au clair de la lune', ru: 'При свете луны' },
+      notes: [3, 3, 3, 4, 5, 4, 3, 5, 4, 4, 3, 3, 3, 3, 4, 5, 4, 3, 5, 4, 4, 3, 4, 4, 4, 4, 1, 1, 4, 3, 2, 1, 0, 3, 3, 3, 4, 5, 4, 3, 5, 4, 4, 3] },
+    { flag: '1f1f7-1f1fa', n: { fr: 'В лесу родилась ёлочка', en: 'В лесу родилась ёлочка', de: 'В лесу родилась ёлочка', ru: 'В лесу родилась ёлочка' },
+      notes: [0, 5, 5, 4, 5, 3, 0, 0, 0, 5, 5, 6, 4, 7, 7, 8, 8, 6, 6, 5, 4, 3, 7, 5, 5, 4, 5, 3] },
+    { flag: '1f30d', n: { fr: 'Joyeux anniversaire', en: 'Happy Birthday', de: 'Zum Geburtstag viel Glück', ru: 'С днём рождения' },
+      notes: [0, 0, 1, 0, 3, 2, 0, 0, 1, 0, 4, 3, 0, 0, 7, 5, 3, 2, 1, 6, 6, 5, 3, 4, 3] },
+    { flag: '1f30d', n: { fr: 'Ode à la joie', en: 'Ode to Joy', de: 'Ode an die Freude', ru: 'Ода к радости' },
+      notes: [5, 5, 6, 7, 7, 6, 5, 4, 3, 3, 4, 5, 5, 4, 4, 5, 5, 6, 7, 7, 6, 5, 4, 3, 3, 4, 5, 4, 3, 3] }
+  ];
+
+  // Memory themes (pictures).
+  var THEMES = [
+    { icon: '1f436', items: ['1f42e', '1f437', '1f436', '1f431', '1f425', '1f438', '1f981', '1f435', '1f430', '1f418', '1f986', '1f43b'] },
+    { icon: '1f697', items: ['1f697', '1f68c', '1f692', '1f693', '1f69c', '1f682', '2708', '1f680', '1f6b2', '26f5', '1f681'] },
+    { icon: '1f34e', items: ['1f34e', '1f34c', '1f353', '1f349', '1f347', '1f955', '1f366', '1f36a', '1f382'] },
+    { icon: '1f388', items: ['1f388', '1f381', '26bd', '1f984', '1f41e', '1f98b', '1f420', '1f42c', '1f996', '1f451', '2b50', '2764'] }
+  ];
+  // Paint stamp picker categories.
+  var STAMP_CATS = [
+    ['1f436', ['1f42e', '1f437', '1f436', '1f431', '1f411', '1f425', '1f438', '1f981', '1f435', '1f434', '1f430', '1f418', '1f986', '1f43b', '1f989', '1f42c']],
+    ['1f338', ['1f338', '1f33b', '1f333', '1f344', '2600', '1f319', '2b50', '1f308', '2744', '2764', '1f41e', '1f98b']],
+    ['1f34e', ['1f34e', '1f34c', '1f353', '1f349', '1f347', '1f955', '1f366', '1f36a', '1f382']],
+    ['1f697', ['1f697', '1f68c', '1f692', '1f693', '1f69c', '1f682', '2708', '1f680', '1f6b2', '26f5', '1f681']],
+    ['1f388', ['1f388', '1f381', '26bd', '1f984', '1f420', '1f996', '1f451', '1f31f', '2728']]
   ];
 
   // =====================================================================
@@ -187,11 +222,8 @@
   }
   function starsFromMistakes(m, a, b) { return m <= a ? 3 : (m <= b ? 2 : 1); }
 
-  // =====================================================================
-  // Layout helpers
-  // =====================================================================
-  // Best grid for n squares in a w x h box.
-  function fitGrid(n, w, h, gap) {
+  // Best grid for n squares in a w x h box (offset by x0, y0).
+  function fitGrid(n, w, h, gap, x0, y0) {
     var bestC = 1, bestS = 0;
     for (var c = 1; c <= n; c++) {
       var r = Math.ceil(n / c);
@@ -199,41 +231,44 @@
       if (s > bestS) { bestS = s; bestC = c; }
     }
     var rows = Math.ceil(n / bestC), out = [];
-    var ox = (w - (bestC * bestS + (bestC - 1) * gap)) / 2;
-    var oy = (h - (rows * bestS + (rows - 1) * gap)) / 2;
+    var ox = (x0 || 0) + (w - (bestC * bestS + (bestC - 1) * gap)) / 2;
+    var oy = (y0 || 0) + (h - (rows * bestS + (rows - 1) * gap)) / 2;
     for (var i = 0; i < n; i++) {
       var row = Math.floor(i / bestC), col = i % bestC;
       var inRow = Math.min(bestC, n - row * bestC);
-      var rowOx = ox + (bestC - inRow) * (bestS + gap) / 2; // centre a short last row
-      out.push({ x: rowOx + col * (bestS + gap), y: oy + row * (bestS + gap), s: bestS });
+      out.push({ x: ox + (bestC - inRow) * (bestS + gap) / 2 + col * (bestS + gap), y: oy + row * (bestS + gap), s: bestS });
     }
     return out;
   }
-  function dotsHTML(done, total, color) {
-    var h = '<div class="dots">';
-    for (var i = 0; i < total; i++) { h += '<div class="dot"' + (i < done ? ' style="background:' + color + '"' : '') + '></div>'; }
-    return h + '</div>';
-  }
 
   // =====================================================================
-  // Screens and overlay
+  // Screens, overlay, confetti
   // =====================================================================
   var currentScreen = 'start';
-  function showScreen(name) {
-    $(currentScreen).className = 'screen';
-    currentScreen = name;
-    $(name).className = 'screen on';
-  }
+  function showScreen(name) { $(currentScreen).className = 'screen'; currentScreen = name; $(name).className = 'screen on'; }
   var overlayOpen = false;
   function openSheet(html) {
-    $('sheet').innerHTML = html;
-    // restart the pop-in animation
-    var s = $('sheet'); s.style.webkitAnimation = 'none'; s.style.animation = 'none'; void s.offsetWidth;
+    var s = $('sheet');
+    s.innerHTML = html;
+    s.style.webkitAnimation = 'none'; s.style.animation = 'none'; void s.offsetWidth;
     s.style.webkitAnimation = ''; s.style.animation = '';
     $('overlay').className = 'on';
     overlayOpen = true;
   }
-  function closeSheet() { $('overlay').className = ''; overlayOpen = false; }
+  function closeSheet() {
+    $('overlay').className = ''; overlayOpen = false;
+    each($('overlay').querySelectorAll('.confetti'), function (c) { c.parentNode.removeChild(c); });
+  }
+  function confetti() {
+    var ov = $('overlay');
+    for (var i = 0; i < 36; i++) {
+      var c = el('div', 'confetti', ov);
+      c.style.left = Math.round(rand(0, W())) + 'px';
+      c.style.background = pick(COLORS);
+      var d = rand(0, 1.2).toFixed(2) + 's';
+      c.style.webkitAnimationDelay = d; c.style.animationDelay = d;
+    }
+  }
 
   // =====================================================================
   // Start screen
@@ -243,126 +278,124 @@
     $('appSub').innerHTML = T().appSub;
     $('soundHint').innerHTML = T().soundHint;
     document.title = T().appTitle;
-    each(document.querySelectorAll('.lang'), function (e) {
-      e.className = 'lang' + (e.getAttribute('data-lang') === lang ? ' sel' : '');
-    });
+    each(document.querySelectorAll('.lang'), function (e) { e.className = 'lang' + (e.getAttribute('data-lang') === lang ? ' sel' : ''); });
   }
   (function buildStart() {
     $('playBtn').innerHTML = ICON.play;
     var deco = [['1f42e', 7, 9], ['1f438', 82, 8], ['1f981', 4, 42], ['1f436', 86, 40], ['1f425', 3, 70], ['1f430', 87, 68]];
     each(deco, function (d, i) {
-      var e = el('div', 'deco', $('start'), inlinePic(d[0], 110));
+      var e = el('div', 'deco', $('start'), img(d[0], 110));
       e.style.left = d[1] + '%'; e.style.top = d[2] + '%';
       e.style.webkitAnimationDelay = (i * 0.5) + 's'; e.style.animationDelay = (i * 0.5) + 's';
     });
-    each(document.querySelectorAll('.lang'), function (e) {
-      onPress(e, function () { setLang(e.getAttribute('data-lang')); SFX.click(); });
-    });
-    onPress($('playBtn'), function () {
-      SFX.good();
-      say(T().hello);
-      openMenu();
-    });
+    each(document.querySelectorAll('.lang'), function (e) { onPress(e, function () { setLang(e.getAttribute('data-lang')); SFX.click(); }); });
+    onPress($('playBtn'), function () { SFX.good(); say(T().hello); openMenu(); });
     renderStart();
   })();
 
+  var FLAGS = { fr: '1f1eb-1f1f7', en: '1f1ec-1f1e7', de: '1f1e9-1f1ea', ru: '1f1f7-1f1fa' };
+  var LANG_NAMES = { fr: 'Français', en: 'English', de: 'Deutsch', ru: 'Русский' };
   function setLang(l) {
     lang = l; store('lang', l);
     document.documentElement.lang = l;
     renderStart();
     if (currentScreen === 'menu') { renderMenu(); }
-    if (currentScreen === 'game') { renderGameBar(); }
+    if (currentScreen === 'game' && game) { startLevel(level); }
   }
 
   // =====================================================================
   // Menu
   // =====================================================================
   var GAMES = [
-    { id: 'animals', icon: '1f42e', color: '#3fbf8f', levels: 3, scored: [0, 1, 1] },
-    { id: 'bubbles', icon: '1f388', color: '#3b8beb', levels: 3, scored: [1, 1, 1] },
-    { id: 'paint', icon: '1f3a8', color: '#ff8a2a', levels: 3, scored: [0, 0, 0], chips: ['1f58c', '1f308', '1f43e'] },
-    { id: 'peek', icon: '1f648', color: '#ef4b6c', levels: 3, scored: [0, 1, 1] },
-    { id: 'piano', icon: '1f3b9', color: '#8f5ce0', levels: 3, scored: [0, 1, 1], chips: ['1f3b9', '2728', '1f4a1'] },
-    { id: 'memory', icon: '1f0cf', color: '#ff6fa8', levels: 4, scored: [1, 1, 1, 1] }
+    { id: 'animals', icon: '1f42e', color: '#2fbf87', color2: '#7be0a9', bg: '#e7f9ef', levels: 3, scored: [0, 1, 1] },
+    { id: 'bubbles', icon: '1f388', color: '#3b8beb', color2: '#7cc4ff', bg: '#dff0ff', levels: 3, scored: [1, 1, 1] },
+    { id: 'paint', icon: '1f3a8', color: '#ff8a2a', color2: '#ffc15e', bg: '#fffdf8', levels: 1, scored: [0], noBar: true },
+    { id: 'peek', icon: '1f648', color: '#ef4b6c', color2: '#ff9aa8', bg: '#ffeef3', levels: 3, scored: [0, 1, 1] },
+    { id: 'piano', icon: '1f3b9', color: '#8f5ce0', color2: '#c39bff', bg: '#fff', levels: 3, scored: [0, 1, 1], chips: ['1f3b9', '2728', '1f31f'] },
+    { id: 'memory', icon: '1f0cf', color: '#ff5d9e', color2: '#ffa3c8', bg: '#fff1f6', levels: 4, scored: [1, 1, 1, 1] }
   ];
   function gameById(id) { for (var i = 0; i < GAMES.length; i++) { if (GAMES[i].id === id) { return GAMES[i]; } } return null; }
 
-  function iconBox(boxEl, code, color, size) {
-    boxEl.style.background = color;
-    boxEl.innerHTML = pic(code, size);
-  }
+  (function buildMenuDeco() {
+    var d = $('menuDeco');
+    each([[6, 30, 120], [70, 18, 150], [40, 60, 100], [85, 75, 130], [15, 85, 110]], function (c, i) {
+      var e = el('div', 'cloud', d);
+      e.style.left = c[0] + '%'; e.style.top = c[1] + '%'; e.style.width = c[2] + 'px'; e.style.height = Math.round(c[2] * 0.36) + 'px';
+      e.style.webkitAnimationDelay = (-i * 7) + 's'; e.style.animationDelay = (-i * 7) + 's';
+    });
+  })();
 
   function renderMenu() {
     $('menuHome').innerHTML = ICON.home;
-    iconBox($('menuLogo'), '1f31f', '#ffc93c', 42);
-    $('menuTitle').innerHTML = T().appTitle;
-    $('menuSub').innerHTML = T().appSub;
-    $('menuLang').innerHTML = T().language + ' · ' + lang.toUpperCase();
+    $('menuLang').innerHTML = img(FLAGS[lang], 36);
+    // Big title, one colour per letter.
+    var t = T().appTitle, h = '', ci = 0;
+    for (var i = 0; i < t.length; i++) {
+      var ch = t.charAt(i);
+      if (ch === ' ') { h += '<span>&nbsp;</span>'; continue; }
+      h += '<span style="color:' + COLORS[ci % 7] + ';-webkit-animation-delay:' + (ci * 0.15) + 's;animation-delay:' + (ci * 0.15) + 's">' + ch + '</span>';
+      ci++;
+    }
+    $('menuTitle').innerHTML = h;
     var grid = $('menuGrid');
     grid.innerHTML = '';
-    var w = W(), h = H() - BAR, gap = 24;
-    var cols = w > h ? 3 : 2, rows = Math.ceil(GAMES.length / cols);
-    var cw = (w - gap * (cols + 1)) / cols, ch = (h - gap * (rows + 1)) / rows;
+    var top = W() > 900 ? 110 : 120;
+    grid.style.top = top + 'px';
+    var w = W(), hh = H() - top, gap = 26;
+    var cols = w > hh ? 3 : 2, rows = Math.ceil(GAMES.length / cols);
+    var cw = (w - gap * (cols + 1)) / cols, chh = (hh - gap * (rows + 1)) / rows;
     each(GAMES, function (g, i) {
       var c = el('div', 'gcard', grid);
-      place(c, gap + (i % cols) * (cw + gap), gap + Math.floor(i / cols) * (ch + gap), cw, ch);
-      var artH = ch - 118;
-      var art = el('div', 'art', c);
-      art.style.height = artH + 'px'; art.style.background = g.color;
-      var ring = el('div', 'ring', art);
-      var rs = Math.min(cw, artH) * 0.8;
-      place(ring, (cw - rs) / 2, (artH - rs) / 2, rs, rs);
-      art.innerHTML += pic(g.icon, Math.min(cw, artH) * 0.58);
-      var txt = el('div', 'txt', c);
-      var gt = T().games[g.id];
+      place(c, gap + (i % cols) * (cw + gap), gap + Math.floor(i / cols) * (chh + gap), cw, chh);
+      c.style.background = g.color;
+      c.style.backgroundImage = 'linear-gradient(160deg, ' + g.color2 + ' 0%, ' + g.color + ' 70%)';
+      setTransform(c, 'rotate(' + (i % 2 ? 1.5 : -1.5) + 'deg)');
+      var ps = Math.min(cw, chh - 50) * 0.62;
+      var b2 = el('div', 'blob2', c); place(b2, cw * 0.62, -cw * 0.12, cw * 0.55, cw * 0.55);
+      var blob = el('div', 'blob', c); place(blob, (cw - ps * 1.3) / 2 - 6, (chh - 50 - ps * 1.3) / 2 - 6, ps * 1.3, ps * 1.3);
+      var p = el('div', 'pic', c, img(g.icon, ps)); place(p, (cw - ps) / 2 - 6, (chh - 50 - ps) / 2 - 6);
+      p.style.webkitAnimationDelay = (i * 0.4) + 's'; p.style.animationDelay = (i * 0.4) + 's';
+      el('div', 't', c, T().games[g.id].t);
       var total = 0, max = 0;
       for (var lv = 0; lv < g.levels; lv++) { if (g.scored[lv]) { max += 3; total += bestOf(g.id, lv); } }
-      txt.innerHTML = '<div class="t">' + gt.t + '</div><div class="s">' + gt.s + '</div>' +
-        '<div class="stars">' + (max ? star(total > 0) + total + ' / ' + max : '&nbsp;') + '</div>';
+      if (max) { el('div', 'pill', c, star(total > 0) + total + ' / ' + max); }
       onPress(c, function () { SFX.boing(300 + i * 60); openGame(g.id); });
     });
   }
   onPress($('menuHome'), function () { SFX.click(); showScreen('start'); });
   onPress($('menuLang'), function () {
     SFX.click();
-    var names = { fr: 'Français', en: 'English', de: 'Deutsch', ru: 'Русский' };
-    var h = '<h2>' + T().language + '</h2><div style="margin-top:18px">';
+    var h = '<h2>' + T().language + '</h2><div style="margin-top:16px">';
     each(['fr', 'en', 'de', 'ru'], function (l) {
-      h += '<div class="langbtn' + (l === lang ? ' sel' : '') + '" data-l="' + l + '">' + names[l] + '</div>';
+      h += '<div class="listbtn' + (l === lang ? ' sel' : '') + '" data-l="' + l + '">' + img(FLAGS[l], 44) + LANG_NAMES[l] + '</div>';
     });
     openSheet(h + '</div>');
-    each($('sheet').querySelectorAll('.langbtn'), function (b) {
+    each($('sheet').querySelectorAll('.listbtn'), function (b) {
       onPress(b, function () { setLang(b.getAttribute('data-l')); SFX.click(); closeSheet(); });
     });
   });
-  function openMenu() {
-    stopGame();
-    closeSheet();
-    showScreen('menu');
-    renderMenu();
-  }
+  function openMenu() { stopGame(); closeSheet(); showScreen('menu'); renderMenu(); }
 
   // =====================================================================
-  // Game frame: bar, levels, help, win
+  // Game frame
   // =====================================================================
-  var game = null;      // current game definition
-  var level = 0;
-  var running = null;   // { stop: fn }
-  var session = 0;      // increases on every (re)start; old timers check it
+  var game = null, level = 0, running = null, session = 0;
 
   function renderGameBar() {
     var g = game, gt = T().games[g.id];
+    $('gBar').style.background = g.color;
     $('gBack').innerHTML = ICON.back;
     $('gRestart').innerHTML = ICON.restart;
-    iconBox($('gIcon'), g.icon, g.color, 44);
+    $('gIcon').innerHTML = pic(g.icon, 42);
     $('gTitle').innerHTML = gt.t;
-    $('gSub').innerHTML = T().level + ' ' + (level + 1) + ' · ' + gt.lv[level];
+    $('gSub').innerHTML = gt.lv[level];
     var lv = $('gLevels');
     lv.innerHTML = '';
+    lv.style.display = g.levels > 1 ? '' : 'none';
     for (var i = 0; i < g.levels; i++) {
       (function (i) {
-        var c = el('div', 'chip' + (i === level ? ' sel' : ''), lv, g.chips ? inlinePic(g.chips[i], 32) : String(i + 1));
-        if (i === level) { c.style.background = g.color; }
+        var c = el('div', 'chip' + (i === level ? ' sel' : ''), lv, g.chips ? img(g.chips[i], 34) : String(i + 1));
+        if (i === level) { c.style.color = g.color; }
         onPress(c, function () { if (i !== level) { SFX.click(); startLevel(i); } });
       })(i);
     }
@@ -374,7 +407,6 @@
     level = (saved !== null && saved < game.levels) ? saved : 0;
     showScreen('game');
     startLevel(level);
-    if (!store('seen_' + id)) { store('seen_' + id, 1); showHelp(); }
   }
 
   function startLevel(lv) {
@@ -382,21 +414,24 @@
     closeSheet();
     level = lv;
     store('level_' + game.id, lv);
-    renderGameBar();
+    var top = game.noBar ? 0 : BAR - 10;
+    $('gBar').style.display = game.noBar ? 'none' : '';
+    if (!game.noBar) { renderGameBar(); }
     $('gInfo').innerHTML = '';
+    $('game').style.background = game.bg;
     // A fresh play area each time, so old touch handlers never pile up.
     $('stage').innerHTML = '';
     var stage = el('div', '', $('stage'));
-    stage.style.position = 'absolute'; stage.style.left = stage.style.top = stage.style.right = stage.style.bottom = '0';
-    stage.style.overflow = 'hidden';
+    stage.style.position = 'absolute'; stage.style.left = '0'; stage.style.right = '0'; stage.style.bottom = '0';
+    stage.style.top = top + 'px'; stage.style.overflow = 'hidden';
     session++;
     var mySession = session;
     var api = {
-      stage: stage, w: W(), h: H() - BAR, level: lv, color: game.color,
+      stage: stage, w: W(), h: H() - top, top: top, level: lv, color: game.color,
       later: function (fn, ms) { setTimeout(function () { if (mySession === session) { fn(); } }, ms); },
       alive: function () { return mySession === session; },
       info: function (html) { $('gInfo').innerHTML = html; return $('gInfo'); },
-      sub: function (text) { $('gSub').innerHTML = T().level + ' ' + (lv + 1) + ' · ' + text; },
+      sub: function (text) { $('gSub').innerHTML = text; },
       win: function (stars) { if (mySession === session) { showWin(stars); } }
     };
     running = GAME_IMPL[game.id](api) || {};
@@ -407,25 +442,49 @@
     running = null;
     if (window.speechSynthesis) { try { window.speechSynthesis.cancel(); } catch (e) {} }
   }
-
   onPress($('gBack'), function () { SFX.click(); openMenu(); });
   onPress($('gRestart'), function () { SFX.swoosh(); startLevel(level); });
   onPress($('gHelp'), function () { SFX.click(); showHelp(); });
 
-  function sheetIcon(code, color) {
-    return '<div class="sh-icon" style="background:' + color + '">' + pic(code, 72) + '</div>';
-  }
+  function sheetIcon(code, color) { return '<div class="sh-icon" style="background:' + color + '">' + pic(code, 70) + '</div>'; }
 
+  // Picture help: rows of pictures with a short sentence under each.
+  var BLANKET_MINI = '<div class="mini" style="background:#8f5ce0;background-image:repeating-linear-gradient(45deg,#8f5ce0,#8f5ce0 8px,#a983ee 8px,#a983ee 16px)"></div>';
+  var CARD_MINI = '<div class="mini" style="background-image:linear-gradient(135deg,#a07cf5,#ff7eb6)"></div>';
+  var KEYS_MINI = '<div class="mini" style="width:90px;background-image:linear-gradient(90deg,#ef4b5c 0,#ef4b5c 20%,#ffd23f 20%,#ffd23f 40%,#3fc27a 40%,#3fc27a 60%,#3b8beb 60%,#3b8beb 80%,#8f5ce0 80%)"></div>';
+  var HELP_PICS = {
+    animals: [[['1f446', '1f42e', '>', '1f50a']], [['1f442', '>', '1f446', '1f431', '>', '2b50']], [['1f442', '>', '1f446', '1f431', '>', '2b50']]],
+    bubbles: [[['1f446', '1f388', '>', '1f4a5']], [['1f446', '1f388', '>', '1f4a5'], ['1f388', '>', '1f436']], [['1f442', 'red', '>', '1f446', 'red', '>', '1f4a5']]],
+    peek: [[['1f446', 'blanket', '>', '1f436']], [['1f440', '1f436', '1f431'], ['blanket', 'blanket', '>', '1f442', '>', '1f446']],
+      [['1f440', '1f436'], ['blanket', '1f504', 'blanket', '1f504', 'blanket'], ['1f442', '>', '1f446', 'blanket', '>', '2b50']]],
+    piano: [[['1f446', 'keys', '>', '1f3b5']], [['1f446', 'keys', '>', '1f3b6', '2728']], [['1f31f', '1f447', '>', '1f446', '>', '1f3b6']]],
+    memory: [[['1f446', 'card', '1f446', 'card'], ['1f436', '=', '1f436', '>', '2705']]]
+  };
+  function helpPics(list) {
+    var h = '<div class="hpics">';
+    each(list, function (p) {
+      if (p === '>') { h += '<div class="arrow">→</div>'; }
+      else if (p === '=') { h += '<div class="arrow">=</div>'; }
+      else if (p === 'blanket') { h += BLANKET_MINI; }
+      else if (p === 'card') { h += CARD_MINI; }
+      else if (p === 'keys') { h += KEYS_MINI; }
+      else if (p === 'red') { h += '<div class="mini" style="width:60px;border-radius:30px;background:#ef4b5c"></div>'; }
+      else { h += img(p, 66); }
+    });
+    return h + '</div>';
+  }
   function showHelp() {
     var g = game, gt = T().games[g.id];
-    var h = sheetIcon(g.icon, g.color) + '<h2>' + gt.t + '</h2><div class="sub">' + T().howTo + '</div><div class="steps">';
-    each(gt.h, function (s, i) {
-      h += '<div class="step"><div class="num" style="background:' + g.color + '">' + (i + 1) + '</div><span>' + s + '</span></div>';
+    var pics = HELP_PICS[g.id], caps = T().help[g.id];
+    var lv = Math.min(level, pics.length - 1), lvc = Math.min(level, caps.length - 1);
+    var h = sheetIcon(g.icon, g.color) + '<h2>' + gt.t + '</h2><div class="sub">' + gt.lv[level] + '</div>';
+    each(pics[lv], function (row, i) {
+      h += '<div class="hrow">' + helpPics(row) + '<div class="hcap">' + (caps[lvc][i] || '') + '</div></div>';
     });
-    h += '</div><div><div class="btn" id="hListen">' + ICON.speaker + T().listen + '</div>' +
+    h += '<div><div class="btn" id="hListen">' + ICON.speaker + T().listen + '</div>' +
       '<div class="btn primary" id="hGo">' + ICON.playSmall + T().letsGo + '</div></div>';
     openSheet(h);
-    onPress($('hListen'), function () { say(gt.t + '. ' + gt.h.join(' ')); });
+    onPress($('hListen'), function () { say(caps[lvc].join(' ')); });
     onPress($('hGo'), function () { SFX.click(); if (window.speechSynthesis) { window.speechSynthesis.cancel(); } closeSheet(); });
   }
 
@@ -434,17 +493,36 @@
     SFX.fanfare();
     say(T().bravo);
     var h = sheetIcon('1f3c6', '#ffc93c') + '<h2>' + T().bravo + '</h2>' +
-      '<div class="sub">' + T().games[game.id].t + ' · ' + T().level + ' ' + (level + 1) + '</div><div class="bigstars">';
+      '<div class="sub">' + T().games[game.id].t + ' · ' + T().games[game.id].lv[level] + '</div><div class="bigstars">';
     for (var i = 0; i < 3; i++) {
-      h += star(i < stars).replace('<svg', '<svg style="-webkit-animation-delay:' + (0.3 + i * 0.25) + 's;animation-delay:' + (0.3 + i * 0.25) + 's"');
+      var s = star(i < stars).replace('rgba(255,255,255,0.55)', '#ece5f5');
+      h += s.replace('<svg', '<svg style="-webkit-animation-delay:' + (0.3 + i * 0.25) + 's;animation-delay:' + (0.3 + i * 0.25) + 's"');
     }
     h += '</div><div><div class="btn" id="wMenu">' + ICON.home + T().menu + '</div>' +
       '<div class="btn" id="wAgain">' + ICON.restart + T().replay + '</div>';
     if (level < game.levels - 1) { h += '<div class="btn primary" id="wNext">' + ICON.playSmall + T().next + '</div>'; }
     openSheet(h + '</div>');
+    confetti();
     onPress($('wMenu'), function () { SFX.click(); openMenu(); });
     onPress($('wAgain'), function () { SFX.click(); startLevel(level); });
     if ($('wNext')) { onPress($('wNext'), function () { SFX.click(); startLevel(level + 1); }); }
+  }
+
+  // Big in-game "listen again" button plus a row of progress stars.
+  function questUI(api, onListen, goal) {
+    var size = Math.min(130, api.h * 0.2);
+    var q = el('div', 'quest', api.stage, ICON.speaker);
+    q.style.background = api.color;
+    var starsW = goal * 58;
+    var totalW = size + 30 + starsW;
+    var x0 = (api.w - totalW) / 2;
+    place(q, x0, 18, size, size);
+    onPress(q, onListen);
+    var row = el('div', 'starsrow', api.stage);
+    place(row, x0 + size + 30, 18 + size / 2 - 26);
+    function set(n) { var h = ''; for (var i = 0; i < goal; i++) { h += star(i < n); } row.innerHTML = h; }
+    set(0);
+    return { set: set, height: size + 30 };
   }
 
   // =====================================================================
@@ -452,57 +530,52 @@
   // =====================================================================
   var GAME_IMPL = {};
 
-  // ---------- 1. Animals: listen, then find ----------
+  // ---------- 1. Animals ----------
   GAME_IMPL.animals = function (api) {
     var stage = api.stage;
-    stage.style.background = '#e9f8f1';
     if (api.level === 0) {
-      var boxes = fitGrid(ANIMALS.length, api.w, api.h, 18);
+      var boxes = fitGrid(ANIMALS.length, api.w, api.h, 16);
       each(ANIMALS, function (a, i) {
         var b = boxes[i], t = el('div', 'tile', stage);
         place(t, b.x, b.y, b.s, b.s);
-        t.innerHTML = '<div style="position:absolute;left:0;right:0;top:0;bottom:' + Math.round(b.s * 0.2) + 'px">' + pic(a.c, b.s * 0.58) + '</div>' +
-          '<div class="cap" style="font-size:' + Math.max(15, Math.round(b.s * 0.11)) + 'px">' + cap(aName(a)) + '</div>';
+        t.style.background = PASTELS[i % PASTELS.length];
+        t.innerHTML = '<div style="position:absolute;left:0;right:0;top:0;bottom:' + Math.round(b.s * 0.2) + 'px">' + pic(a.c, b.s * 0.6) + '</div>' +
+          '<div class="cap" style="font-size:' + Math.max(15, Math.round(b.s * 0.11)) + 'px;color:#5b4a6d;text-shadow:none">' + cap(aName(a)) + '</div>';
         onDown(t, function () { restartAnim(t, 'bounce'); SFX.boing(a.f); say(aFull(a)); });
       });
       return {};
     }
     var n = api.level === 1 ? 3 : 6, goal = 5, done = 0, mistakes = 0, busy = false, target = null, lastTarget = null;
-    function renderInfo() {
-      var inf = api.info('<div class="ib first" id="askAgain">' + ICON.speaker + '</div>' + dotsHTML(done, goal, api.color));
-      onPress(inf.querySelector('#askAgain'), function () { if (target) { say(where(target)); } });
-    }
+    var area = el('div', '', stage);
+    var ui = questUI(api, function () { if (target) { SFX.click(); say(where(target)); } }, goal);
     function round() {
-      stage.innerHTML = '';
+      area.innerHTML = '';
       busy = false;
       var pool = shuffle(ANIMALS);
       target = pool[0];
       if (lastTarget && target.k === lastTarget.k) { target = pool[1]; pool[1] = pool[0]; pool[0] = target; }
       lastTarget = target;
       var options = shuffle(pool.slice(0, n));
-      var boxes = fitGrid(n, api.w, api.h, 34);
+      var boxes = fitGrid(n, api.w, api.h - ui.height, 30, 0, ui.height - 10);
       each(options, function (a, i) {
-        var b = boxes[i], t = el('div', 'tile', stage, pic(a.c, b.s * 0.72));
+        var b = boxes[i], t = el('div', 'tile', area, pic(a.c, b.s * 0.72));
         place(t, b.x, b.y, b.s, b.s);
+        t.style.background = PASTELS[(i * 3) % PASTELS.length];
         onDown(t, function () {
           if (busy) { return; }
           if (a.k === target.k) {
             busy = true;
             addClass(t, 'good'); restartAnim(t, 'bounce');
             SFX.good(); say(praise() + ' ' + T().animals[a.k][1]);
-            done++; renderInfo();
-            api.later(function () {
-              if (done >= goal) { api.win(starsFromMistakes(mistakes, 1, 3)); } else { round(); }
-            }, 1700);
+            done++; ui.set(done);
+            api.later(function () { if (done >= goal) { api.win(starsFromMistakes(mistakes, 1, 3)); } else { round(); } }, 1700);
           } else {
-            mistakes++;
+            mistakes++; busy = true;
             restartAnim(t, 'shake'); SFX.bad(); say(cap(aName(a)));
-            busy = true;
             api.later(function () { busy = false; say(where(target)); }, 1300);
           }
         });
       });
-      renderInfo();
       api.later(function () { say(where(target)); }, 500);
     }
     round();
@@ -512,7 +585,6 @@
   // ---------- 2. Bubbles ----------
   GAME_IMPL.bubbles = function (api) {
     var stage = api.stage;
-    stage.style.background = '#dff0ff';
     stage.style.backgroundImage = 'linear-gradient(180deg, #e8f6ff 0%, #bfe0ff 100%)';
     var cfg = [
       { v: [45, 75], r: [70, 100], max: 6, animals: 0 },
@@ -523,14 +595,17 @@
     var palette = cfg.colorMode ? [0, 2, 3, 4] : [0, 1, 2, 3, 4, 5, 6];
     var target = cfg.colorMode ? pick(palette) : -1;
 
+    var pill = el('div', 'scorepill', stage);
+    place(pill, api.w - 190, 24);
+    var qb = null;
+    if (cfg.colorMode) {
+      qb = el('div', 'quest', stage, ICON.speaker);
+      place(qb, 24, 18, 110, 110); qb.style.zIndex = '5';
+      onPress(qb, function () { sayColor(); });
+    }
     function renderInfo() {
-      var h = '';
-      if (cfg.colorMode) {
-        h += '<div class="ib first" id="askColor" style="background:' + COLORS[target] + ';color:#fff">' + ICON.speaker + '</div>';
-      }
-      h += '<div class="counter" style="margin-left:10px">' + inlinePic('1f388', 32) + score + ' / ' + goal + '</div>';
-      var inf = api.info(h);
-      if (cfg.colorMode) { onPress(inf.querySelector('#askColor'), sayColor); }
+      pill.innerHTML = img('1f388', 40) + score + ' / ' + goal;
+      if (qb) { qb.style.background = COLORS[target]; }
     }
     function sayColor() { say(T().colorQ.replace('{c}', T().colors[target])); }
 
@@ -540,10 +615,11 @@
       var b = { r: r, x: rand(r, api.w - r), y: startInside ? rand(api.h * 0.35, api.h + r) : api.h + r,
         v: rand(cfg.v[0], cfg.v[1]), w: rand(0, 6), ci: ci, animal: null };
       if (Math.random() < cfg.animals) { b.animal = pick(ANIMALS); }
-      b.e = el('div', 'bub', stage, '<div class="shine"></div>' + (b.animal ? pic(b.animal.c, r * 1.15) : ''));
+      b.e = el('div', 'bub', null, '<div class="shine"></div>' + (b.animal ? pic(b.animal.c, r * 1.15) : ''));
       b.e.style.width = b.e.style.height = (2 * r) + 'px';
       b.e.style.background = COLORS[ci];
       b.e.style.opacity = b.animal ? '0.95' : '0.85';
+      stage.insertBefore(b.e, pill);
       list.push(b);
     }
     for (var i = 0; i < cfg.max - 2; i++) { add(true); }
@@ -557,8 +633,7 @@
         b.y -= b.v * dt; b.w += dt * 2;
         b.dx = b.x + Math.sin(b.w) * 14;
         if (b.y < -b.r * 2) { stage.removeChild(b.e); list.splice(i, 1); continue; }
-        var tr = 'translate3d(' + Math.round(b.dx - b.r) + 'px,' + Math.round(b.y - b.r) + 'px,0)';
-        b.e.style.webkitTransform = tr; b.e.style.transform = tr;
+        setTransform(b.e, 'translate3d(' + Math.round(b.dx - b.r) + 'px,' + Math.round(b.y - b.r) + 'px,0)');
       }
       requestAnimationFrame(frame);
     }
@@ -572,23 +647,19 @@
           d.style.left = (b.dx - 9) + 'px'; d.style.top = (b.y - 9) + 'px';
           void d.offsetWidth;
           var a = k / 8 * Math.PI * 2, dist = b.r + 40;
-          var tr = 'translate(' + Math.round(Math.cos(a) * dist) + 'px,' + Math.round(Math.sin(a) * dist) + 'px) scale(0.3)';
-          d.style.webkitTransform = tr; d.style.transform = tr; d.style.opacity = '0';
+          setTransform(d, 'translate(' + Math.round(Math.cos(a) * dist) + 'px,' + Math.round(Math.sin(a) * dist) + 'px) scale(0.3)');
+          d.style.opacity = '0';
           setTimeout(function () { if (d.parentNode) { d.parentNode.removeChild(d); } }, 550);
         })(k);
       }
     }
-
     onDown(stage, function (pt) {
       if (overlayOpen) { return; }
-      var x = pt.clientX, y = pt.clientY - BAR;
+      var x = pt.clientX, y = pt.clientY - api.top;
       for (var i = list.length - 1; i >= 0; i--) {
         var b = list[i], dx = x - b.dx, dy = y - b.y;
         if (dx * dx + dy * dy < (b.r + 28) * (b.r + 28)) {
-          if (cfg.colorMode && b.ci !== target) {
-            mistakes++; restartAnim(b.e, 'wobble'); SFX.bad();
-            return;
-          }
+          if (cfg.colorMode && b.ci !== target) { mistakes++; restartAnim(b.e, 'wobble'); SFX.bad(); return; }
           burst(b); SFX.pop();
           if (b.animal) { say(cap(aName(b.animal))); }
           stage.removeChild(b.e); list.splice(i, 1);
@@ -611,261 +682,490 @@
     return { stop: function () { alive = false; } };
   };
 
-  // ---------- 3. Painting ----------
+  // ---------- 3. Painting (full screen, no title bar) ----------
+  // Colouring pages: shapes in a 100 x 100 box.
+  // c: circle, e: ellipse, r: rounded rectangle, p: closed polygon, l: open line
+  var PAGES = [
+    { id: 'car', s: [['r', 8, 45, 84, 25, 8], ['p', 24, 45, 34, 27, 64, 27, 78, 45], ['l', 51, 29, 51, 45], ['c', 28, 72, 10], ['c', 72, 72, 10], ['c', 28, 72, 4], ['c', 72, 72, 4], ['c', 87, 53, 3]] },
+    { id: 'train', s: [['r', 40, 36, 44, 34, 4], ['r', 62, 18, 22, 22, 3], ['r', 66, 22, 14, 10, 2], ['r', 45, 21, 9, 15, 2], ['c', 50, 12, 4], ['c', 58, 6, 3], ['p', 84, 58, 94, 70, 84, 70],
+      ['r', 5, 43, 30, 27, 4], ['r', 10, 48, 20, 10, 2], ['l', 35, 62, 40, 62], ['c', 14, 74, 6], ['c', 27, 74, 6], ['c', 50, 74, 7], ['c', 74, 74, 7], ['l', 2, 83, 98, 83]] },
+    { id: 'plane', s: [['e', 50, 50, 40, 10], ['p', 42, 47, 28, 18, 38, 18, 58, 47], ['p', 42, 53, 28, 82, 38, 82, 58, 53], ['p', 15, 46, 8, 28, 16, 28, 25, 45],
+      ['c', 62, 48, 2.6], ['c', 70, 48, 2.6], ['c', 78, 48, 2.6], ['c', 15, 15, 5]] },
+    { id: 'house', s: [['r', 22, 46, 56, 44, 2], ['p', 14, 48, 50, 16, 86, 48], ['r', 43, 66, 14, 24, 3], ['r', 28, 55, 12, 12, 2], ['r', 60, 55, 12, 12, 2],
+      ['r', 64, 18, 8, 17, 1], ['c', 88, 12, 7], ['l', 2, 90, 98, 90]] },
+    { id: 'fish', s: [['e', 45, 50, 30, 20], ['p', 72, 50, 93, 32, 93, 68], ['c', 28, 45, 4], ['p', 40, 32, 52, 18, 58, 33], ['p', 42, 66, 52, 78, 56, 66], ['c', 10, 25, 3], ['c', 7, 14, 2]] },
+    { id: 'butterfly', s: [['e', 32, 34, 18, 15], ['e', 68, 34, 18, 15], ['e', 36, 64, 13, 11], ['e', 64, 64, 13, 11], ['c', 30, 33, 5], ['c', 70, 33, 5],
+      ['e', 50, 50, 4.5, 24], ['l', 48, 27, 41, 13], ['l', 52, 27, 59, 13]] },
+    { id: 'cat', s: [['c', 50, 55, 28], ['p', 27, 41, 28, 15, 44, 30], ['p', 73, 41, 72, 15, 56, 30], ['e', 40, 52, 4, 6], ['e', 60, 52, 4, 6], ['p', 46, 62, 54, 62, 50, 67],
+      ['l', 18, 62, 38, 64], ['l', 18, 70, 38, 68], ['l', 82, 62, 62, 64], ['l', 82, 70, 62, 68]] },
+    { id: 'flower', s: [['l', 50, 55, 50, 96], ['e', 39, 78, 11, 5], ['e', 61, 72, 11, 5], ['c', 50, 20, 11], ['c', 64, 29, 11], ['c', 64, 45, 11], ['c', 50, 53, 11], ['c', 36, 45, 11], ['c', 36, 29, 11], ['c', 50, 37, 10]] },
+    { id: 'boat', s: [['p', 14, 62, 86, 62, 75, 78, 25, 78], ['l', 50, 62, 50, 14], ['p', 53, 17, 53, 58, 80, 58], ['p', 47, 24, 47, 58, 24, 58],
+      ['l', 4, 86, 14, 82, 24, 86, 34, 82, 44, 86, 54, 82, 64, 86, 74, 82, 84, 86, 96, 82], ['c', 86, 14, 7]] }
+  ];
+  function drawPage(c, page, ox, oy, sc, lw) {
+    c.lineWidth = lw; c.lineJoin = 'round'; c.lineCap = 'round';
+    each(page.s, function (sh) {
+      var t = sh[0], i;
+      c.beginPath();
+      if (t === 'c') { c.arc(ox + sh[1] * sc, oy + sh[2] * sc, sh[3] * sc, 0, Math.PI * 2); }
+      else if (t === 'e') {
+        var cx = ox + sh[1] * sc, cy = oy + sh[2] * sc, rx = sh[3] * sc, ry = sh[4] * sc, k = 0.5523;
+        c.moveTo(cx - rx, cy);
+        c.bezierCurveTo(cx - rx, cy - ry * k, cx - rx * k, cy - ry, cx, cy - ry);
+        c.bezierCurveTo(cx + rx * k, cy - ry, cx + rx, cy - ry * k, cx + rx, cy);
+        c.bezierCurveTo(cx + rx, cy + ry * k, cx + rx * k, cy + ry, cx, cy + ry);
+        c.bezierCurveTo(cx - rx * k, cy + ry, cx - rx, cy + ry * k, cx - rx, cy);
+      } else if (t === 'r') {
+        var x = ox + sh[1] * sc, y = oy + sh[2] * sc, w = sh[3] * sc, h = sh[4] * sc, r = sh[5] * sc;
+        c.moveTo(x + r, y); c.lineTo(x + w - r, y); c.quadraticCurveTo(x + w, y, x + w, y + r);
+        c.lineTo(x + w, y + h - r); c.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        c.lineTo(x + r, y + h); c.quadraticCurveTo(x, y + h, x, y + h - r);
+        c.lineTo(x, y + r); c.quadraticCurveTo(x, y, x + r, y);
+      } else {
+        c.moveTo(ox + sh[1] * sc, oy + sh[2] * sc);
+        for (i = 3; i < sh.length; i += 2) { c.lineTo(ox + sh[i] * sc, oy + sh[i + 1] * sc); }
+        if (t === 'p') { c.closePath(); }
+      }
+      c.stroke();
+    });
+  }
+
   GAME_IMPL.paint = function (api) {
     var stage = api.stage;
-    stage.style.background = '#fffdf8';
-    var toolH = 112, ch = api.h - toolH;
-    var cv = el('canvas', '', stage);
-    cv.style.position = 'absolute'; cv.style.left = '0'; cv.style.top = '0';
+    var toolH = 104, w = api.w, ch = api.h - toolH + 20;
     var ratio = window.devicePixelRatio > 1 ? 2 : 1;
-    cv.width = api.w * ratio; cv.height = ch * ratio;
-    cv.style.width = api.w + 'px'; cv.style.height = ch + 'px';
-    var c = cv.getContext('2d');
-    c.setTransform(ratio, 0, 0, ratio, 0, 0);
-    c.lineCap = 'round'; c.lineJoin = 'round';
+    function mkCanvas(z) {
+      var cv = el('canvas', '', stage);
+      cv.style.position = 'absolute'; cv.style.left = '0'; cv.style.top = '0'; cv.style.zIndex = z;
+      cv.width = w * ratio; cv.height = ch * ratio; cv.style.width = w + 'px'; cv.style.height = ch + 'px';
+      var c = cv.getContext('2d'); c.setTransform(ratio, 0, 0, ratio, 0, 0);
+      return { cv: cv, c: c };
+    }
+    var paint = mkCanvas(1);
+    var c = paint.c; c.lineCap = 'round'; c.lineJoin = 'round';
     var stamps = el('div', '', stage);
-    stamps.style.position = 'absolute'; stamps.style.left = '0'; stamps.style.top = '0';
-    stamps.style.width = api.w + 'px'; stamps.style.height = ch + 'px'; stamps.style.overflow = 'hidden';
-    stamps.style.pointerEvents = 'none';
+    stamps.style.position = 'absolute'; stamps.style.left = '0'; stamps.style.top = '0'; stamps.style.zIndex = '2';
+    stamps.style.width = w + 'px'; stamps.style.height = ch + 'px'; stamps.style.overflow = 'hidden'; stamps.style.pointerEvents = 'none';
+    var outline = mkCanvas(3);
+    outline.cv.style.pointerEvents = 'none';
 
-    var mode = api.level; // 0 brush, 1 rainbow, 2 stamps
-    var color = store('paintColor') || COLORS[0], hue = 0;
-    var sizes = mode === 2 ? [90, 130, 180] : [14, 30, 56];
-    var size = sizes[1];
-    var stampAnimal = null; // null = random
+    var back = el('div', 'floatbtn', stage, ICON.back);
+    place(back, 16, 16);
+    onPress(back, function () { SFX.click(); openMenu(); });
 
+    var mode = 'brush', colorIdx = store('paintColor');
+    if (colorIdx === null || colorIdx > 8) { colorIdx = 0; }
+    var hue = 0, SIZES = [12, 28, 52], STAMP_SIZES = [80, 120, 170], sizeIdx = 1, stampCode = null;
+    var page = null, mask = null, mw = Math.round(w), mh = Math.round(ch);
+
+    // ----- toolbar -----
     var bar = el('div', 'toolbar', stage);
-    var sizeEls = [];
-    each(sizes, function (s, i) {
-      var sw = el('div', 'sw' + (s === size ? ' sel' : ''), bar);
-      sw.style.background = '#fff';
-      var d = Math.round(10 + i * 12);
-      sw.innerHTML = '<div class="sizedot" style="width:' + d + 'px;height:' + d + 'px;margin:' + (-d / 2) + 'px 0 0 ' + (-d / 2) + 'px"></div>';
-      sizeEls.push(sw);
-      onPress(sw, function () {
-        size = s; SFX.click();
-        each(sizeEls, function (x) { removeClass(x, 'sel'); }); addClass(sw, 'sel');
-      });
-    });
+    var sizeBtn = el('div', 'sw tool', bar);
+    function renderSizeBtn() {
+      var d = 10 + sizeIdx * 12;
+      sizeBtn.innerHTML = '<div class="sizedot" style="width:' + d + 'px;height:' + d + 'px;margin:' + (-d / 2) + 'px 0 0 ' + (-d / 2) + 'px"></div>';
+    }
+    renderSizeBtn();
     el('div', 'sep', bar);
-    if (mode === 0) {
-      var colorEls = [];
-      each(COLORS, function (col, i) {
-        var sw = el('div', 'sw' + (col === color ? ' sel' : ''), bar);
-        sw.style.background = col;
+    var colorEls = [];
+    for (var ci = 0; ci < 9; ci++) {
+      (function (ci) {
+        var sw = el('div', 'sw', bar);
+        if (ci < 8) { sw.style.background = COLORS[ci]; }
+        else { sw.style.backgroundImage = 'linear-gradient(135deg, #ef4b5c, #ff8a2a, #ffd23f, #3fc27a, #3b8beb, #8f5ce0)'; }
         colorEls.push(sw);
         onPress(sw, function () {
-          color = col; store('paintColor', col);
-          each(colorEls, function (x) { removeClass(x, 'sel'); }); addClass(sw, 'sel');
-          tone(NOTES[i], 0.15, 'sine', 0.25);
-          say(cap(T().colors[i]));
+          colorIdx = ci; store('paintColor', ci); mode = 'brush';
+          renderSel();
+          tone(NOTES[ci + 1], 0.15, 'sine', 0.25);
+          if (ci < 8) { say(cap(T().colors[ci])); }
         });
-      });
-    } else if (mode === 1) {
-      var rb = el('div', 'sw sel', bar);
-      rb.style.width = '220px'; rb.style.borderRadius = '33px';
-      rb.style.backgroundImage = 'linear-gradient(90deg, #ef4b5c, #ff8a2a, #ffd23f, #3fc27a, #3b8beb, #8f5ce0)';
-    } else {
-      var choice = [null].concat(ANIMALS.slice(0, 7)), stampEls = [];
-      each(choice, function (a, i) {
-        var sw = el('div', 'sw' + (i === 0 ? ' sel' : ''), bar, a ? pic(a.c, 44) : '');
-        sw.style.background = a ? '#fff' : '#f1ebfa';
-        if (!a) { sw.innerHTML = '<div style="position:absolute;left:50%;top:50%;width:34px;height:34px;margin:-17px 0 0 -17px;color:#5b3f86">' + ICON.random + '</div>'; }
-        stampEls.push(sw);
-        onPress(sw, function () {
-          stampAnimal = a; SFX.click();
-          each(stampEls, function (x) { removeClass(x, 'sel'); }); addClass(sw, 'sel');
-          if (a) { say(cap(aName(a))); }
-        });
-      });
+      })(ci);
     }
     el('div', 'sep', bar);
-    var tr = el('div', 'sw', bar, '<div style="position:absolute;left:50%;top:50%;width:34px;height:34px;margin:-17px 0 0 -17px;color:#ef4b5c">' + ICON.trash + '</div>');
-    tr.style.background = '#fff0f2';
-    onPress(tr, function () {
-      c.clearRect(0, 0, api.w, ch);
-      stamps.innerHTML = '';
-      SFX.swoosh();
+    var stampBtn = el('div', 'sw tool', bar);
+    var pageBtn = el('div', 'sw tool', bar, pic('1f5bc', 36));
+    var trashBtn = el('div', 'sw tool', bar, ICON.trash);
+    trashBtn.style.color = '#ef4b5c'; trashBtn.style.background = '#fff0f2';
+    function renderSel() {
+      each(colorEls, function (x, i) { if (mode === 'brush' && i === colorIdx) { addClass(x, 'sel'); } else { removeClass(x, 'sel'); } });
+      stampBtn.innerHTML = pic(stampCode || '1f436', 38);
+      if (mode === 'stamp') { addClass(stampBtn, 'sel'); } else { removeClass(stampBtn, 'sel'); }
+    }
+    renderSel();
+
+    // ----- pop-up panels (like a keyboard emoji picker) -----
+    var panel = null, backdrop = null;
+    function closePanel() {
+      if (panel) { stage.removeChild(panel); stage.removeChild(backdrop); panel = null; backdrop = null; }
+    }
+    function openPanel(anchor, width) {
+      closePanel();
+      backdrop = el('div', 'backdrop', stage);
+      onDown(backdrop, function () { closePanel(); });
+      panel = el('div', 'popup', stage);
+      panel.style.width = width + 'px';
+      var r = anchor.getBoundingClientRect();
+      var x = Math.max(10, Math.min(w - width - 10, r.left + r.width / 2 - width / 2));
+      panel.style.left = Math.round(x) + 'px';
+      panel.style.bottom = (toolH + 10) + 'px';
+      return panel;
+    }
+    onPress(sizeBtn, function () {
+      SFX.click();
+      var p = openPanel(sizeBtn, 290);
+      var row = el('div', 'pgrid', p);
+      each(SIZES, function (s, i) {
+        var it = el('div', 'pitem' + (i === sizeIdx ? ' sel' : ''), row);
+        var d = 10 + i * 14;
+        it.innerHTML = '<div class="sizedot" style="width:' + d + 'px;height:' + d + 'px;margin:' + (-d / 2) + 'px 0 0 ' + (-d / 2) + 'px"></div>';
+        onPress(it, function () { sizeIdx = i; renderSizeBtn(); SFX.click(); closePanel(); });
+      });
     });
+    var stampCat = 0;
+    function openStamps() {
+      var p = openPanel(stampBtn, Math.min(w - 20, 620));
+      var tabs = el('div', 'tabs', p), grid = el('div', 'pgrid', p);
+      function fillGrid() {
+        grid.innerHTML = '';
+        each(STAMP_CATS[stampCat][1], function (code) {
+          var it = el('div', 'pitem' + (code === stampCode && mode === 'stamp' ? ' sel' : ''), grid, pic(code, 60));
+          onPress(it, function () {
+            stampCode = code; mode = 'stamp'; renderSel(); SFX.boing(400); closePanel();
+            for (var k = 0; k < ANIMALS.length; k++) { if (ANIMALS[k].c === code) { say(cap(aName(ANIMALS[k]))); } }
+          });
+        });
+      }
+      each(STAMP_CATS, function (cat, i) {
+        var tb = el('div', 'tab' + (i === stampCat ? ' sel' : ''), tabs, pic(cat[0], 40));
+        onPress(tb, function () {
+          stampCat = i; SFX.click();
+          each(tabs.childNodes, function (x, j) { x.className = 'tab' + (j === i ? ' sel' : ''); });
+          fillGrid();
+        });
+      });
+      fillGrid();
+    }
+    onPress(stampBtn, function () { SFX.click(); openStamps(); });
 
-    // Narrow screens: shrink the toolbar a bit.
-    if (api.w < 900) { bar.style.webkitTransform = 'scale(0.82)'; bar.style.transform = 'scale(0.82)'; bar.style.left = '-10%'; bar.style.right = '-10%'; }
+    function clearAll() { c.clearRect(0, 0, w, ch); stamps.innerHTML = ''; }
+    function setPage(pg) {
+      clearAll();
+      page = pg; mask = null;
+      outline.c.clearRect(0, 0, w, ch);
+      if (!pg) { return; }
+      var size = Math.min(w - 40, ch - 30), sc = size / 100;
+      var ox = (w - size) / 2, oy = (ch - size) / 2 + 5;
+      outline.c.strokeStyle = '#3d2c4f';
+      drawPage(outline.c, pg, ox, oy, sc, 6);
+      // Boundary map for the fill tool, at 1 pixel per screen point.
+      var mc = document.createElement('canvas');
+      mc.width = mw; mc.height = mh;
+      var mctx = mc.getContext('2d');
+      mctx.strokeStyle = '#000';
+      drawPage(mctx, pg, ox, oy, sc, 6);
+      var data = mctx.getImageData(0, 0, mw, mh).data;
+      mask = new Uint8Array(mw * mh);
+      for (var i = 0; i < mw * mh; i++) { mask[i] = data[i * 4 + 3] > 60 ? 1 : 0; }
+    }
+    onPress(pageBtn, function () {
+      SFX.click();
+      var p = openPanel(pageBtn, Math.min(w - 20, 540));
+      var grid = el('div', 'pgrid', p);
+      var blank = el('div', 'page', grid);
+      blank.style.background = '#fff';
+      onPress(blank, function () { setPage(null); SFX.swoosh(); closePanel(); });
+      each(PAGES, function (pg) {
+        var it = el('div', 'page', grid);
+        var tc = el('canvas', '', it);
+        tc.width = 144 * ratio; tc.height = 106 * ratio; tc.style.width = '144px'; tc.style.height = '106px';
+        var tctx = tc.getContext('2d'); tctx.setTransform(ratio, 0, 0, ratio, 0, 0); tctx.strokeStyle = '#3d2c4f';
+        drawPage(tctx, pg, 25, 4, 0.98, 2.5);
+        onPress(it, function () { setPage(pg); SFX.fill(); closePanel(); });
+      });
+    });
+    onPress(trashBtn, function () { setPage(page); SFX.swoosh(); });
 
-    var lastPts = {};
-    function draw(id, x, y, start) {
+    // ----- fill (colouring pages) -----
+    function currentColor() { return colorIdx === 8 ? pick(COLORS) : COLORS[colorIdx]; }
+    function fillAt(x, y) {
+      if (!mask) { return; }
+      x = Math.round(x); y = Math.round(y);
+      if (x < 0 || y < 0 || x >= mw || y >= mh || mask[y * mw + x]) { return; }
+      var region = new Uint8Array(mw * mh), stack = [x, y], count = 0;
+      while (stack.length) {
+        var py = stack.pop(), px = stack.pop(), row = py * mw;
+        if (region[row + px] || mask[row + px]) { continue; }
+        var l = px, r = px;
+        while (l > 0 && !mask[row + l - 1] && !region[row + l - 1]) { l--; }
+        while (r < mw - 1 && !mask[row + r + 1] && !region[row + r + 1]) { r++; }
+        for (var xx = l; xx <= r; xx++) {
+          var j = row + xx;
+          region[j] = 1; count++;
+          if (py > 0 && !region[j - mw] && !mask[j - mw]) { stack.push(xx, py - 1); }
+          if (py < mh - 1 && !region[j + mw] && !mask[j + mw]) { stack.push(xx, py + 1); }
+        }
+      }
+      if (!count) { return; }
+      var col = currentColor();
+      var rr = parseInt(col.substr(1, 2), 16), gg = parseInt(col.substr(3, 2), 16), bb = parseInt(col.substr(5, 2), 16);
+      var tmp = document.createElement('canvas'); tmp.width = mw; tmp.height = mh;
+      var tctx = tmp.getContext('2d'), id = tctx.createImageData(mw, mh), d = id.data;
+      for (var k = 0; k < mw * mh; k++) {
+        // Colour the region, and the edge pixels next to it (they sit under the outline).
+        var on = region[k] || (mask[k] && (region[k - 1] || region[k + 1] || region[k - mw] || region[k + mw] ||
+          region[k - 2] || region[k + 2] || region[k - 2 * mw] || region[k + 2 * mw]));
+        if (on) { var o = k * 4; d[o] = rr; d[o + 1] = gg; d[o + 2] = bb; d[o + 3] = 255; }
+      }
+      tctx.putImageData(id, 0, 0);
+      c.drawImage(tmp, 0, 0, mw, mh);
+      SFX.fill();
+    }
+
+    // ----- drawing -----
+    var pts = {};
+    function strokeTo(id, x, y) {
+      var p = pts[id];
+      if (colorIdx === 8) {
+        hue = (hue + (p && p.x !== null ? Math.sqrt((x - p.x) * (x - p.x) + (y - p.y) * (y - p.y)) * 0.6 : 8)) % 360;
+        c.strokeStyle = 'hsl(' + Math.round(hue) + ',90%,56%)';
+      } else { c.strokeStyle = COLORS[colorIdx]; }
+      c.lineWidth = SIZES[sizeIdx];
+      c.beginPath();
+      if (p && p.x !== null) { c.moveTo(p.x, p.y); } else { c.moveTo(x - 0.1, y); }
+      c.lineTo(x, y); c.stroke();
+      pts[id] = { x: x, y: y, sx: p ? p.sx : x, sy: p ? p.sy : y, moved: true };
+    }
+    function down(id, x, y) {
       if (y > ch) { return; }
-      if (mode === 2) {
-        if (!start) { return; }
-        var a = stampAnimal || pick(ANIMALS);
-        var s = el('div', 'stamp', stamps, inlinePic(a.c, size));
+      if (mode === 'stamp') {
+        var size = STAMP_SIZES[sizeIdx];
+        var s = el('div', 'stamp', stamps, img(stampCode, size));
         s.style.left = (x - size / 2) + 'px'; s.style.top = (y - size / 2) + 'px';
-        var rot = Math.round(rand(-18, 18));
-        s.firstChild.style.webkitTransform = 'rotate(' + rot + 'deg)'; s.firstChild.style.transform = 'rotate(' + rot + 'deg)';
+        setTransform(s.firstChild, 'rotate(' + Math.round(rand(-15, 15)) + 'deg)');
         if (stamps.childNodes.length > 80) { stamps.removeChild(stamps.firstChild); }
-        SFX.boing(a.f);
+        SFX.boing(rand(250, 500));
         return;
       }
-      var p = lastPts[id];
-      if (mode === 1) {
-        hue = (hue + (p ? Math.sqrt((x - p.x) * (x - p.x) + (y - p.y) * (y - p.y)) * 0.6 : 8)) % 360;
-        c.strokeStyle = 'hsl(' + Math.round(hue) + ',90%,56%)';
-      } else {
-        c.strokeStyle = color;
-      }
-      c.lineWidth = size;
-      c.beginPath();
-      if (p) { c.moveTo(p.x, p.y); } else { c.moveTo(x - 0.1, y); }
-      c.lineTo(x, y); c.stroke();
-      lastPts[id] = { x: x, y: y };
+      // On a colouring page: a tap fills, a drag paints.
+      if (page) { pts[id] = { x: null, y: null, sx: x, sy: y, moved: false }; return; }
+      pts[id] = null;
+      strokeTo(id, x, y);
     }
+    function move(id, x, y) {
+      var p = pts[id];
+      if (mode === 'stamp' || p === undefined) { return; }
+      if (page && p && !p.moved) {
+        if (Math.abs(x - p.sx) + Math.abs(y - p.sy) < 12) { return; }
+        pts[id] = { x: p.sx, y: p.sy, sx: p.sx, sy: p.sy, moved: true };
+      }
+      strokeTo(id, x, y);
+    }
+    function up(id) {
+      var p = pts[id];
+      if (page && p && !p.moved && mode === 'brush') { fillAt(p.sx, p.sy); }
+      delete pts[id];
+    }
+    var cv = paint.cv;
     cv.addEventListener('touchstart', function (ev) {
       ev.preventDefault();
-      for (var i = 0; i < ev.changedTouches.length; i++) {
-        var t = ev.changedTouches[i]; lastPts[t.identifier] = null;
-        draw(t.identifier, t.clientX, t.clientY - BAR, true);
-      }
+      for (var i = 0; i < ev.changedTouches.length; i++) { var t = ev.changedTouches[i]; down(t.identifier, t.clientX, t.clientY - api.top); }
     }, false);
     cv.addEventListener('touchmove', function (ev) {
       ev.preventDefault();
-      for (var i = 0; i < ev.changedTouches.length; i++) {
-        var t = ev.changedTouches[i]; draw(t.identifier, t.clientX, t.clientY - BAR, false);
-      }
+      for (var i = 0; i < ev.changedTouches.length; i++) { var t = ev.changedTouches[i]; move(t.identifier, t.clientX, t.clientY - api.top); }
     }, false);
-    cv.addEventListener('touchend', function (ev) {
-      for (var i = 0; i < ev.changedTouches.length; i++) { lastPts[ev.changedTouches[i].identifier] = null; }
-    }, false);
+    function ends(ev) { for (var i = 0; i < ev.changedTouches.length; i++) { up(ev.changedTouches[i].identifier); } }
+    cv.addEventListener('touchend', ends, false);
+    cv.addEventListener('touchcancel', ends, false);
     var mouse = false;
-    cv.addEventListener('mousedown', function (ev) { mouse = true; lastPts.m = null; draw('m', ev.clientX, ev.clientY - BAR, true); }, false);
-    cv.addEventListener('mousemove', function (ev) { if (mouse) { draw('m', ev.clientX, ev.clientY - BAR, false); } }, false);
-    window.addEventListener('mouseup', function () { mouse = false; }, false);
+    cv.addEventListener('mousedown', function (ev) { mouse = true; down('m', ev.clientX, ev.clientY - api.top); }, false);
+    cv.addEventListener('mousemove', function (ev) { if (mouse) { move('m', ev.clientX, ev.clientY - api.top); } }, false);
+    cv.addEventListener('mouseup', function () { if (mouse) { mouse = false; up('m'); } }, false);
     return {};
   };
 
   // ---------- 4. Peekaboo ----------
   GAME_IMPL.peek = function (api) {
     var stage = api.stage;
-    stage.style.background = '#ffe9f1';
-    var BLANKETS = [['#8f5ce0', '#a983ee'], ['#3b8beb', '#64a6f2'], ['#ff8a2a', '#ffa75e']];
-    function blanketHTML(i) {
-      var c = BLANKETS[i];
+    var BL = [['#8f5ce0', '#a983ee'], ['#3b8beb', '#64a6f2'], ['#ff8a2a', '#ffa75e']];
+    function blanketStyle(i) {
+      var c = BL[i];
       return 'background-color:' + c[0] + ';background-image:repeating-linear-gradient(45deg,' + c[0] + ',' + c[0] + ' 30px,' + c[1] + ' 30px,' + c[1] + ' 60px)';
     }
-    var n = api.level + 1, goal = 5, done = 0, mistakes = 0, busy = false, target = null;
-    var gap = 30, sw = Math.min((api.w - gap * (n + 1)) / n, api.h - 2 * gap), sh = Math.min(api.h - 2 * gap, sw * 1.15);
-    var slots = [];
-    for (var i = 0; i < n; i++) {
-      var s = el('div', 'slot', stage);
-      var x = (api.w - (n * sw + (n - 1) * gap)) / 2 + i * (sw + gap);
-      place(s, x, (api.h - sh) / 2, sw, sh);
-      var face = el('div', '', s); face.style.position = 'absolute'; face.style.left = face.style.top = face.style.right = face.style.bottom = '0';
-      var bl = el('div', 'blanket', s, '<div class="face">?</div>');
-      bl.setAttribute('style', blanketHTML(i));
-      slots.push({ e: s, face: face, bl: bl, animal: null, open: false });
+    function makeSlots(n, x0, y0, aw, ah) {
+      var gap = 30, sw = Math.min((aw - gap * (n + 1)) / n, ah - 20), sh = Math.min(ah - 20, sw * 1.12);
+      var xs = [], slots = [];
+      for (var i = 0; i < n; i++) { xs.push(x0 + (aw - (n * sw + (n - 1) * gap)) / 2 + i * (sw + gap)); }
+      for (i = 0; i < n; i++) {
+        var s = el('div', 'slot', stage);
+        place(s, xs[i], y0 + (ah - sh) / 2, sw, sh);
+        var face = el('div', '', s); face.style.position = 'absolute'; face.style.left = face.style.top = face.style.right = face.style.bottom = '0';
+        var bl = el('div', 'blanket', s, '<div class="face">?</div>');
+        bl.setAttribute('style', blanketStyle(i));
+        slots.push({ e: s, face: face, bl: bl, animal: null, open: false, pos: i });
+      }
+      return { slots: slots, xs: xs, size: Math.min(sw, sh), sw: sw, gap: gap };
     }
-    function fill(animals) {
-      each(slots, function (sl, i) { sl.animal = animals[i]; sl.face.innerHTML = pic(animals[i].c, Math.min(sw, sh) * 0.7); });
-    }
+    function setAnimal(sl, a, size) { sl.animal = a; sl.face.innerHTML = a ? pic(a.c, size * 0.7) : ''; }
     function setOpen(sl, o) { sl.open = o; if (o) { addClass(sl.bl, 'open'); } else { removeClass(sl.bl, 'open'); } }
 
-    if (n === 1) {
-      fill([pick(ANIMALS)]);
-      onDown(slots[0].e, function () {
-        if (busy) { return; }
-        busy = true; api.later(function () { busy = false; }, 600);
-        var sl = slots[0];
-        if (!sl.open) {
-          setOpen(sl, true); tone(400, 0.25, 'triangle', 0.35, 900);
-          say(T().games.peek.t + ' ! ' + aFull(sl.animal));
-          restartAnim(sl.face, 'bounce');
+    // Level 1: classic peekaboo.
+    if (api.level === 0) {
+      var one = makeSlots(1, 0, 0, api.w, api.h), sl0 = one.slots[0], busy0 = false;
+      setAnimal(sl0, pick(ANIMALS), one.size);
+      onDown(sl0.e, function () {
+        if (busy0) { return; }
+        busy0 = true; api.later(function () { busy0 = false; }, 600);
+        if (!sl0.open) {
+          setOpen(sl0, true); tone(400, 0.25, 'triangle', 0.35, 900);
+          say(T().games.peek.t + ' ! ' + aFull(sl0.animal));
+          restartAnim(sl0.face, 'bounce');
         } else {
-          setOpen(sl, false); tone(500, 0.25, 'triangle', 0.3, 250);
-          var old = sl.animal;
-          api.later(function () { var a = pick(ANIMALS); while (a.k === old.k) { a = pick(ANIMALS); } fill([a]); }, 500);
+          setOpen(sl0, false); tone(500, 0.25, 'triangle', 0.3, 250);
+          var old = sl0.animal;
+          api.later(function () { var a = pick(ANIMALS); while (a.k === old.k) { a = pick(ANIMALS); } setAnimal(sl0, a, one.size); }, 500);
         }
       });
       return {};
     }
 
-    function renderInfo() {
-      var inf = api.info('<div class="ib first" id="askPeek">' + ICON.speaker + '</div>' + dotsHTML(done, goal, api.color));
-      onPress(inf.querySelector('#askPeek'), function () { if (target) { say(where(target)); } });
+    var goal = 5, done = 0, mistakes = 0, busy = true, target = null;
+    var ui = questUI(api, function () { if (target && !busy) { SFX.click(); say(where(target)); } }, goal);
+    var g = makeSlots(3, 0, ui.height - 10, api.w, api.h - ui.height);
+    var slots = g.slots;
+    function closeAll() { each(slots, function (s) { setOpen(s, false); }); }
+    function openAll() { each(slots, function (s) { if (s.e.style.display !== 'none') { setOpen(s, true); } }); }
+    function moveTo(sl, pos) { sl.pos = pos; sl.e.style.left = Math.round(g.xs[pos]) + 'px'; }
+
+    // Level 2: look at the animals, they hide, find the one asked for.
+    function roundRemember() {
+      busy = true;
+      var count = done < 2 ? 2 : 3;
+      var animals = shuffle(ANIMALS).slice(0, 3);
+      each(slots, function (s, i) {
+        s.e.style.display = (count === 2 && i === 2) ? 'none' : '';
+        setAnimal(s, animals[i], g.size);
+        moveTo(s, i);
+      });
+      if (count === 2) { // centre the two cards
+        var shift = (g.sw + g.gap) / 2;
+        slots[0].e.style.left = Math.round(g.xs[0] + shift) + 'px';
+        slots[1].e.style.left = Math.round(g.xs[1] + shift) + 'px';
+      }
+      target = animals[Math.floor(Math.random() * count)];
+      openAll();
+      say(T().look);
+      api.later(function () {
+        closeAll(); SFX.whoosh();
+        api.later(function () { busy = false; say(where(target)); }, 700);
+      }, 2600 + count * 300);
     }
-    function round() {
-      var animals = shuffle(ANIMALS).slice(0, n);
-      fill(animals);
-      target = pick(animals);
-      busy = false;
-      renderInfo();
-      api.later(function () { say(where(target)); }, 400);
+    // Level 3: one animal hides, the blankets swap places, follow it with your eyes.
+    function roundFollow() {
+      busy = true;
+      var a = pick(ANIMALS), hidden = Math.floor(Math.random() * 3);
+      each(slots, function (s, i) { s.e.style.display = ''; moveTo(s, i); setAnimal(s, i === hidden ? a : null, g.size); });
+      target = a;
+      setOpen(slots[hidden], true);
+      say(T().look + ' ' + aFull(a));
+      var swaps = 2 + Math.min(done, 3), k = 0;
+      function swapOnce() {
+        if (k >= swaps) { api.later(function () { busy = false; say(where(target)); }, 500); return; }
+        k++;
+        var p1 = Math.floor(Math.random() * 3), p2 = (p1 + 1 + Math.floor(Math.random() * 2)) % 3, s1 = null, s2 = null;
+        each(slots, function (s) { if (s.pos === p1) { s1 = s; } if (s.pos === p2) { s2 = s; } });
+        moveTo(s1, p2); moveTo(s2, p1);
+        SFX.whoosh();
+        api.later(swapOnce, 950);
+      }
+      api.later(function () { closeAll(); SFX.whoosh(); api.later(swapOnce, 900); }, 2400);
     }
+    var round = api.level === 1 ? roundRemember : roundFollow;
+
     each(slots, function (sl) {
       onDown(sl.e, function () {
-        if (busy || sl.open) { return; }
+        if (busy || sl.open || overlayOpen) { return; }
         setOpen(sl, true);
         tone(400, 0.25, 'triangle', 0.3, 900);
-        if (sl.animal.k === target.k) {
+        if (sl.animal && sl.animal.k === target.k) {
           busy = true;
           restartAnim(sl.face, 'bounce');
           SFX.good(); say(praise() + ' ' + T().animals[sl.animal.k][1]);
-          done++; renderInfo();
+          done++; ui.set(done);
           api.later(function () {
-            each(slots, function (x) { setOpen(x, false); });
-            api.later(function () { if (done >= goal) { api.win(starsFromMistakes(mistakes, 1, 3)); } else { round(); } }, 600);
+            closeAll();
+            api.later(function () { if (done >= goal) { api.win(starsFromMistakes(mistakes, 1, 3)); } else { round(); } }, 700);
           }, 1800);
         } else {
           mistakes++; busy = true;
-          say(cap(aName(sl.animal)));
-          api.later(function () { setOpen(sl, false); busy = false; api.later(function () { say(where(target)); }, 500); }, 1300);
+          restartAnim(sl.e, 'shake');
+          if (sl.animal) { say(cap(aName(sl.animal))); } else { SFX.bad(); }
+          api.later(function () {
+            setOpen(sl, false);
+            api.later(function () { busy = false; say(where(target)); }, 500);
+          }, 1300);
         }
       });
     });
-    round();
+    api.later(round, 400);
     return {};
   };
 
   // ---------- 5. Piano ----------
-  var songIndex = 0;
+  var songIdx = store('song') || 0;
   GAME_IMPL.piano = function (api) {
     var stage = api.stage;
-    stage.style.background = '#fff8ec';
-    var mode = api.level, song = null, pos = 0, mistakes = 0, finished = false, songNo = 0;
-    if (mode > 0) { songNo = songIndex % SONGS.length; song = SONGS[songNo]; songIndex++; }
-    var kw = api.w / NOTES.length, keys = [];
-    var NOTE_PICS = ['1f3b5', '2b50', '2764', '2728'];
+    var mode = api.level, pos = 0, mistakes = 0, finished = false;
+    if (songIdx >= SONGS.length) { songIdx = 0; }
+    var song = SONGS[songIdx].notes;
+    var nk = NOTES.length, kw = api.w / nk, keys = [];
+    var NOTE_PICS = ['1f3b5', '1f3b6', '2b50', '2764', '2728'];
 
     function renderInfo() {
-      if (!song) { return; }
-      api.sub(T().songs[songNo]);
-      api.info(inlinePic('1f3b5', 34) + '<div class="progress"><div style="width:' + Math.round(pos / song.length * 100) + '%;background:' + api.color + '"></div></div>');
+      if (mode === 0) { return; }
+      var pct = Math.round(pos / song.length * 100);
+      var inf = api.info('<div class="pillw press" id="songBtn"><div class="fill" style="width:' + pct + '%"></div>' + img('1f3b5', 30) +
+        '<span style="max-width:230px;overflow:hidden;text-overflow:ellipsis">' + SONGS[songIdx].n[lang] + '</span><span style="margin-left:8px;opacity:.5">▾</span></div>');
+      onPress(inf.querySelector('#songBtn'), openSongs);
+    }
+    function openSongs() {
+      SFX.click();
+      var h = '<h2>' + T().songsLabel + '</h2><div style="margin-top:16px">';
+      each(SONGS, function (s, i) { h += '<div class="listbtn' + (i === songIdx ? ' sel' : '') + '" data-i="' + i + '">' + img(s.flag, 44) + s.n[lang] + '</div>'; });
+      openSheet(h + '</div>');
+      each($('sheet').querySelectorAll('.listbtn'), function (b) {
+        onPress(b, function () { songIdx = +b.getAttribute('data-i'); store('song', songIdx); SFX.click(); startLevel(level); });
+      });
     }
     function floatNote(i, y) {
-      var n = el('div', 'note', stage, inlinePic(pick(NOTE_PICS), 64));
+      var n = el('div', 'note', stage, img(pick(NOTE_PICS), 64));
       n.style.left = (i * kw + kw / 2 - 32) + 'px'; n.style.top = (y - 70) + 'px';
       setTimeout(function () { if (n.parentNode) { n.parentNode.removeChild(n); } }, 1300);
     }
-    function light(i) {
-      addClass(keys[i].e, 'down');
-      setTimeout(function () { removeClass(keys[i].e, 'down'); }, 220);
-    }
+    function light(i) { addClass(keys[i].e, 'down'); setTimeout(function () { removeClass(keys[i].e, 'down'); }, 220); }
     function showHint() {
-      each(keys, function (k) { removeClass(k.e, 'glow'); k.hint.style.display = 'none'; });
-      if (mode === 2 && !finished) { addClass(keys[song[pos]].e, 'glow'); keys[song[pos]].hint.style.display = 'block'; }
+      each(keys, function (k, i) {
+        removeClass(k.e, 'glow'); removeClass(k.e, 'dim'); k.hint.style.display = 'none';
+        if (mode === 2 && !finished) {
+          if (i === song[pos]) { addClass(k.e, 'glow'); k.hint.style.display = 'block'; } else { addClass(k.e, 'dim'); }
+        }
+      });
     }
     function songDone() {
       finished = true; showHint();
-      api.later(function () { api.win(mode === 1 ? 3 : starsFromMistakes(mistakes, 2, 5)); }, 700);
+      api.later(function () { api.win(mode === 1 ? 3 : starsFromMistakes(mistakes, 2, 5)); }, 800);
     }
     each(NOTES, function (f, i) {
       var k = el('div', 'key', stage, '<div class="gloss"></div>');
       place(k, i * kw, 0, kw, api.h);
-      k.style.background = COLORS[i];
-      var hint = el('div', 'hint', k, inlinePic('1f31f', 70));
+      k.style.background = KEY_COLORS[i];
+      var hint = el('div', '', k, '<div class="hand">' + img('1f447', 80) + '</div><div class="hint">' + img('1f31f', 70) + '</div>');
       hint.style.display = 'none';
       keys.push({ e: k, hint: hint });
       onDown(k, function (pt) {
         if (overlayOpen) { return; }
-        var y = pt.clientY - BAR;
+        var y = pt.clientY - api.top;
         if (mode === 0 || finished) { tone(f, 0.6, 'triangle', 0.4); light(i); floatNote(i, y); return; }
         if (mode === 1) {
           var ni = song[pos];
@@ -880,8 +1180,8 @@
           if (pos >= song.length) { songDone(); } else { showHint(); }
         } else {
           mistakes++;
-          tone(f, 0.3, 'sine', 0.15);
-          restartAnim(keys[song[pos]].hint, 'bounce');
+          tone(f, 0.25, 'sine', 0.12);
+          restartAnim(keys[song[pos]].e, 'shake');
         }
       });
     });
@@ -891,49 +1191,67 @@
   };
 
   // ---------- 6. Memory ----------
+  var memTheme = store('memTheme') || 0;
   GAME_IMPL.memory = function (api) {
     var stage = api.stage;
-    stage.style.background = '#fff1f6';
+    if (memTheme >= THEMES.length) { memTheme = 0; }
     var pairs = [2, 3, 4, 6][api.level];
-    var deck = [], pool = shuffle(ANIMALS), i;
-    for (i = 0; i < pairs; i++) { deck.push(pool[i]); deck.push(pool[i]); }
+    var items = shuffle(THEMES[memTheme].items).slice(0, pairs);
+    var deck = [];
+    each(items, function (x) { deck.push(x); deck.push(x); });
     deck = shuffle(deck);
-    var boxes = fitGrid(deck.length, api.w, api.h, 26);
-    var open = [], found = 0, moves = 0, busy = false;
+    var boxes = fitGrid(deck.length, api.w, api.h, 24);
+    var open = [], found = 0, moves = 0, busy = true, cards = [];
     var backStar = '<svg viewBox="0 0 24 24"><path fill="rgba(255,255,255,0.9)" d="M12 2.6l2.9 5.9 6.5.9-4.7 4.6 1.1 6.4L12 17.4l-5.8 3 1.1-6.4-4.7-4.6 6.5-.9z"/></svg>';
 
     function renderInfo() {
-      api.info('<div class="counter">' + T().moves + ' : ' + moves + '</div>' +
-        '<div class="counter" style="margin-left:8px">' + inlinePic('1f0cf', 30) + found + ' / ' + pairs + '</div>');
+      var inf = api.info('<div class="pillw press" id="themeBtn">' + img(THEMES[memTheme].icon, 30) + '<span>' + T().themes[memTheme] + '</span><span style="margin-left:8px;opacity:.5">▾</span></div>' +
+        '<div class="pillw">' + img('2705', 30) + '<span>' + found + ' / ' + pairs + '</span></div>');
+      onPress(inf.querySelector('#themeBtn'), function () {
+        SFX.click();
+        var h = '<h2>' + T().themeLabel + '</h2><div style="margin-top:16px">';
+        each(THEMES, function (t, i) { h += '<div class="listbtn' + (i === memTheme ? ' sel' : '') + '" data-i="' + i + '">' + img(t.icon, 44) + T().themes[i] + '</div>'; });
+        openSheet(h + '</div>');
+        each($('sheet').querySelectorAll('.listbtn'), function (b) {
+          onPress(b, function () { memTheme = +b.getAttribute('data-i'); store('memTheme', memTheme); SFX.click(); startLevel(level); });
+        });
+      });
     }
     function turn(card, faceUp) {
       addClass(card, 'flip');
       setTimeout(function () {
-        card.className = 'card ' + (faceUp ? 'face' : 'back-side') + ' flip';
-        card.innerHTML = faceUp ? pic(card.animal.c, card.size * 0.68) : backStar;
+        card.className = 'card ' + (faceUp ? 'face' : 'back-side') + ' flip' + (card.isFound ? ' found' : '');
+        card.innerHTML = faceUp ? pic(card.code, card.size * 0.66) : backStar;
         void card.offsetWidth;
         removeClass(card, 'flip');
       }, 180);
     }
-    each(deck, function (a, n) {
-      var b = boxes[n], card = el('div', 'card back-side', stage, backStar);
+    function animalFor(code) {
+      for (var k = 0; k < ANIMALS.length; k++) { if (ANIMALS[k].c === code) { return ANIMALS[k]; } }
+      return null;
+    }
+    each(deck, function (code, n) {
+      var b = boxes[n], card = el('div', 'card face', stage, pic(code, b.s * 0.66));
       place(card, b.x, b.y, b.s, b.s);
-      card.animal = a; card.size = b.s;
+      card.code = code; card.size = b.s;
+      cards.push(card);
       onDown(card, function () {
         if (busy || card.isOpen || card.isFound || overlayOpen) { return; }
         card.isOpen = true; open.push(card);
         turn(card, true);
-        tone(a.f * 2, 0.15, 'sine', 0.3);
+        tone(400 + n * 30, 0.15, 'sine', 0.3);
         if (open.length < 2) { return; }
-        busy = true; moves++; renderInfo();
+        busy = true; moves++;
         var c1 = open[0], c2 = open[1];
         open = [];
-        if (c1.animal.k === c2.animal.k) {
+        if (c1.code === c2.code) {
           api.later(function () {
             c1.isFound = c2.isFound = true;
             addClass(c1, 'found'); addClass(c2, 'found');
             restartAnim(c1, 'bounce'); restartAnim(c2, 'bounce');
-            SFX.good(); say(aFull(a));
+            SFX.good();
+            var an = animalFor(c1.code);
+            say(an ? aFull(an) : praise());
             found++; renderInfo(); busy = false;
             if (found === pairs) {
               var s = moves <= pairs + 1 ? 3 : (moves <= pairs * 2 ? 2 : 1);
@@ -951,6 +1269,9 @@
       });
     });
     renderInfo();
+    // Show all the cards for a moment, then turn them over.
+    say(T().look);
+    api.later(function () { each(cards, function (cd) { turn(cd, false); }); SFX.whoosh(); busy = false; }, 1400 + pairs * 350);
     return {};
   };
 
@@ -966,7 +1287,6 @@
     if (currentScreen === 'game' && game && !overlayOpen) { startLevel(level); }
   }, false);
 
-  // Pick up new versions of the app when online.
   if (window.applicationCache) {
     window.applicationCache.addEventListener('updateready', function () {
       try { window.applicationCache.swapCache(); } catch (e) {}
