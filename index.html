@@ -29,6 +29,9 @@
     color: #fff; font-size: 140px; line-height: 260px;
     -webkit-box-shadow: 0 12px 0 #b8304f; box-shadow: 0 12px 0 #b8304f;
   }
+  .tri { position: absolute; left: 50%; top: 50%; width: 0; height: 0; margin: -65px 0 0 -40px;
+    border-left: 110px solid #fff; border-top: 65px solid transparent; border-bottom: 65px solid transparent; }
+  img { -webkit-touch-callout: none; -webkit-user-drag: none; pointer-events: none; }
   #langs { position: absolute; left: 0; right: 0; bottom: 30px; }
   .lang {
     display: inline-block; margin: 0 8px; padding: 10px 20px; border-radius: 24px;
@@ -113,7 +116,7 @@
 <body>
 
 <div id="start" class="screen on">
-  <div id="playBtn">&#9654;</div>
+  <div id="playBtn"><div class="tri"></div></div>
   <div id="langs">
     <span class="lang" data-lang="fr">Français</span>
     <span class="lang" data-lang="en">English</span>
@@ -178,20 +181,26 @@
   if (!WORDS[lang]) { lang = 'fr'; }
 
   var ANIMALS = [
-    { e: '🐮', k: 'cow',    f: 220 },
-    { e: '🐷', k: 'pig',    f: 330 },
-    { e: '🐶', k: 'dog',    f: 392 },
-    { e: '🐱', k: 'cat',    f: 523 },
-    { e: '🐑', k: 'sheep',  f: 294 },
-    { e: '🐥', k: 'chick',  f: 660 },
-    { e: '🐸', k: 'frog',   f: 196 },
-    { e: '🦁', k: 'lion',   f: 147 },
-    { e: '🐵', k: 'monkey', f: 440 }
+    { e: '1f42e', k: 'cow',    f: 220 },
+    { e: '1f437', k: 'pig',    f: 330 },
+    { e: '1f436', k: 'dog',    f: 392 },
+    { e: '1f431', k: 'cat',    f: 523 },
+    { e: '1f411', k: 'sheep',  f: 294 },
+    { e: '1f425', k: 'chick',  f: 660 },
+    { e: '1f438', k: 'frog',   f: 196 },
+    { e: '1f981', k: 'lion',   f: 147 },
+    { e: '1f435', k: 'monkey', f: 440 }
   ];
   var COLORS = ['#e63946', '#f77f00', '#ffd60a', '#2a9d8f', '#277da1', '#7b2cbf', '#ff70a6', '#8d5524'];
 
   // ---------- Helpers ----------
   function $(id) { return document.getElementById(id); }
+  // Pictures are SVG files, not emoji: iOS 9 Safari won't draw emoji at large sizes.
+  function pic(code, size) {
+    size = Math.floor(size);
+    return '<img src="e/' + code + '.svg" alt="" style="position:absolute;left:50%;top:50%;width:' + size +
+      'px;height:' + size + 'px;margin:' + (-size / 2) + 'px 0 0 ' + (-size / 2) + 'px">';
+  }
   function W() { return window.innerWidth; }
   function H() { return window.innerHeight; }
   function rand(a, b) { return a + Math.random() * (b - a); }
@@ -308,12 +317,12 @@
 
   // ---------- Menu ----------
   var GAMES = [
-    { id: 'animals', icon: '🐮', color: '#2a9d8f' },
-    { id: 'bubbles', icon: '🔵', color: '#277da1' },
-    { id: 'paint',   icon: '🎨', color: '#f77f00' },
-    { id: 'peek',    icon: '🙈', color: '#e63946' },
-    { id: 'piano',   icon: '🎹', color: '#7b2cbf' },
-    { id: 'memory',  icon: '🃏', color: '#ff70a6' }
+    { id: 'animals', icon: '1f42e', color: '#2a9d8f' },
+    { id: 'bubbles', icon: '1f535', color: '#277da1' },
+    { id: 'paint',   icon: '1f3a8', color: '#f77f00' },
+    { id: 'peek',    icon: '1f648', color: '#e63946' },
+    { id: 'piano',   icon: '1f3b9', color: '#7b2cbf' },
+    { id: 'memory',  icon: '1f0cf', color: '#ff70a6' }
   ];
   var SETUP = {};
   SETUP.menu = function () {
@@ -325,7 +334,7 @@
       t.className = 'tile';
       t.style.background = g.color;
       t.style.fontSize = Math.floor(Math.min(boxes[i].w, boxes[i].h) * 0.55) + 'px';
-      t.innerHTML = '<span>' + g.icon + '</span>';
+      t.innerHTML = pic(g.icon, Math.min(boxes[i].w, boxes[i].h) * 0.6);
       place(t, boxes[i]);
       onTap(t, function () {
         t.className = 'tile pressed';
@@ -345,7 +354,7 @@
       var el = document.createElement('div');
       el.className = 'animal';
       el.style.fontSize = Math.floor(Math.min(boxes[i].w, boxes[i].h) * 0.7) + 'px';
-      el.innerHTML = '<span>' + a.e + '</span>';
+      el.innerHTML = pic(a.e, Math.min(boxes[i].w, boxes[i].h) * 0.72);
       place(el, boxes[i]);
       onTap(el, function () {
         flash(el, 'bounce');
@@ -437,7 +446,7 @@
     each(COLORS.concat(['eraser']), function (col) {
       var d = document.createElement('div');
       d.className = 'swatch' + (col === 'eraser' ? ' eraser' : '');
-      if (col === 'eraser') { d.innerHTML = '✖'; }
+      if (col === 'eraser') { d.innerHTML = '\u2715'; }
       else { d.style.background = col; }
       onTap(d, function () {
         if (col === 'eraser') {
@@ -490,11 +499,12 @@
     an.style.top = (H() - size * 1.15) / 2 + 'px';
     an.style.fontSize = size + 'px';
     an.style.lineHeight = size * 1.15 + 'px';
+    an.style.height = size * 1.15 + 'px';
     place(bl, box);
     var open = false, busy = false;
     function hide() {
       var a = ANIMALS[Math.floor(rand(0, ANIMALS.length))];
-      an.innerHTML = a.e;
+      an.innerHTML = pic(a.e, size);
       an.setAttribute('data-k', a.k);
       bl.className = '';
       open = false;
@@ -525,7 +535,7 @@
 
   // ---------- Game 5: Rainbow piano ----------
   var NOTES = [262, 294, 330, 349, 392, 440, 494, 523];
-  var NOTE_ICONS = ['♪', '♫', '⭐', '❤'];
+  var NOTE_ICONS = ['1f3b5', '2b50', '2764'];
   SETUP.piano = function () {
     var s = $('piano');
     each(s.querySelectorAll('.key'), function (el) { s.removeChild(el); });
@@ -546,7 +556,7 @@
         k.className = 'key down';
         var n = document.createElement('div');
         n.className = 'note';
-        n.innerHTML = NOTE_ICONS[Math.floor(rand(0, NOTE_ICONS.length))];
+        n.innerHTML = '<img src="e/' + NOTE_ICONS[Math.floor(rand(0, NOTE_ICONS.length))] + '.svg" width="70" height="70" alt="">';
         n.style.color = '#fff';
         n.style.left = (pt.clientX - 30) + 'px';
         n.style.top = (pt.clientY - 60) + 'px';
@@ -580,7 +590,7 @@
       card.className = card.className + ' flip';
       setTimeout(function () {
         card.className = 'card ' + (faceUp ? 'face' : 'back-side') + ' flip';
-        card.innerHTML = faceUp ? '<span>' + card.animal.e + '</span>' : '';
+        card.innerHTML = faceUp ? pic(card.animal.e, card.picSize) : '';
         void card.offsetWidth;
         card.className = card.className.replace(' flip', '');
       }, 180);
@@ -590,6 +600,7 @@
       var card = document.createElement('div');
       card.className = 'card back-side';
       card.animal = a;
+      card.picSize = Math.min(boxes[n].w, boxes[n].h) * 0.65;
       card.style.fontSize = Math.floor(Math.min(boxes[n].w, boxes[n].h) * 0.6) + 'px';
       place(card, boxes[n]);
       onTap(card, function () {
