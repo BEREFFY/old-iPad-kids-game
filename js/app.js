@@ -116,6 +116,7 @@
       if (src.start) { src.start(0); } else { src.noteOn(0); }
     }
     if (actx.state === 'suspended' && actx.resume) { actx.resume(); }
+    loadRecordings();
   }
   document.addEventListener('touchend', unlockAudio, false);
   document.addEventListener('mouseup', unlockAudio, false);
@@ -148,12 +149,30 @@
   var lang = store('lang') || 'fr';
   if (!I18N[lang]) { lang = 'fr'; }
   function T() { return I18N[lang]; }
+  // Pick the nicest voice installed for the language. iPads can download "Enhanced" voices
+  // (Settings > General > Accessibility > Speech > Voices), which sound much less robotic.
+  function bestVoice() {
+    try {
+      var vs = window.speechSynthesis.getVoices() || [], want = T().voice.substr(0, 2), best = null, score = -1;
+      for (var i = 0; i < vs.length; i++) {
+        var v = vs[i], l = (v.lang || '').replace('_', '-');
+        if (l.substr(0, 2) !== want) { continue; }
+        var id = ((v.voiceURI || '') + ' ' + (v.name || '')).toLowerCase(), sc = 0;
+        if (l === T().voice) { sc += 1; }
+        if (id.indexOf('premium') >= 0 || id.indexOf('enhanced') >= 0) { sc += 10; }
+        if (id.indexOf('compact') >= 0) { sc -= 1; }
+        if (sc > score) { score = sc; best = v; }
+      }
+      return best;
+    } catch (e) { return null; }
+  }
   function say(text) {
     if (!window.speechSynthesis || !window.SpeechSynthesisUtterance) { return; }
     try {
       window.speechSynthesis.cancel();
       var u = new SpeechSynthesisUtterance(text);
-      u.lang = T().voice; u.rate = 0.9; u.pitch = 1.15;
+      u.lang = T().voice; u.rate = 0.85; u.pitch = 1.1;
+      var v = bestVoice(); if (v) { u.voice = v; }
       window.speechSynthesis.speak(u);
     } catch (e) {}
   }
@@ -170,7 +189,44 @@
     { c: '1f986', k: 'duck', f: 494 }, { c: '1f43b', k: 'bear', f: 165 }, { c: '1f989', k: 'owl', f: 349 }
   ];
   function aName(a) { return T().animals[a.k][0]; }
-  function aFull(a) { var x = T().animals[a.k]; return cap(x[0]) + '. ' + x[1]; }
+  // Real animal recordings (sounds/animals/*.mp3), decoded once and played with Web Audio.
+  var ANIMAL_REC = { cat: 1, cow: 1, dog: 1, elephant: 1, lion: 1, pig: 1 };
+  var recBuf = {}, recLoading = false;
+  function loadRecordings() {
+    if (recLoading || !actx) { return; }
+    recLoading = true;
+    each(ANIMALS, function (a) {
+      if (!ANIMAL_REC[a.k]) { return; }
+      var x = new XMLHttpRequest();
+      x.open('GET', 'sounds/animals/' + a.k + '.mp3', true);
+      x.responseType = 'arraybuffer';
+      x.onload = function () {
+        if (x.status && x.status !== 200) { return; }
+        try { actx.decodeAudioData(x.response, function (b) { recBuf[a.k] = b; }, function () {}); } catch (e) {}
+      };
+      x.send();
+    });
+  }
+  var recSrc = null;
+  // Plays the animal's real sound; returns how long it lasts (seconds).
+  function animalSound(a) {
+    var b = recBuf[a.k];
+    if (!actx || !b) { SFX.boing(a.f); return 0.4; }
+    try { if (recSrc) { if (recSrc.stop) { recSrc.stop(0); } else { recSrc.noteOff(0); } } } catch (e) {}
+    var src = actx.createBufferSource(), g = actx.createGain();
+    src.buffer = b; g.gain.value = 0.9;
+    src.connect(g); g.connect(actx.destination);
+    if (src.start) { src.start(0); } else { src.noteOn(0); }
+    recSrc = src;
+    return b.duration;
+  }
+  // Real sound first, then the voice says the name.
+  var nameTimer = null;
+  function animalHello(a, prefix) {
+    var d = animalSound(a);
+    if (nameTimer) { clearTimeout(nameTimer); }
+    nameTimer = setTimeout(function () { say((prefix ? prefix + ' ' : '') + cap(aName(a))); }, Math.round(d * 1000) + 150);
+  }
   function where(a) { return T().where.replace('{x}', aName(a)); }
 
   var COLORS = ['#ef4b5c', '#ff8a2a', '#ffd23f', '#3fc27a', '#3b8beb', '#8f5ce0', '#ff7eb6', '#9a6236'];
@@ -179,20 +235,42 @@
   // Piano: 10 white keys, G3 to B4.
   // key index: 0 G3, 1 A3, 2 B3, 3 C4, 4 D4, 5 E4, 6 F4, 7 G4, 8 A4, 9 B4
   var NOTES = [196, 220, 247, 262, 294, 330, 349, 392, 440, 494];
-  var KEY_COLORS = ['#ef4b5c', '#ff6f3c', '#ff9f1c', '#ffd23f', '#9ed84b', '#3fc27a', '#2ec4b6', '#3b8beb', '#8f5ce0', '#ff7eb6'];
+  var WHITE = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+  function midiOf(n) { return 12 * (parseInt(n.charAt(1), 10) + 1) + WHITE[n.charAt(0)]; }
+  function freqOf(m) { return 440 * Math.pow(2, (m - 69) / 12); }
+  var WHITE_STEPS = [0, 2, 4, 5, 7, 9, 11];
+  function nextWhite(m, dir) { do { m += dir; } while (WHITE_STEPS.indexOf(((m % 12) + 12) % 12) < 0); return m; }
+  var DEFAULT_KEYS = ['G3', 'A3', 'B3', 'C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4'];
+  // Keyboard for a song: every white key from its lowest to its highest note (at least 8 keys).
+  function songKeys(notes) {
+    var lo = 999, hi = -1, keys = [], m;
+    each(notes, function (n) { var x = midiOf(n); if (x < lo) { lo = x; } if (x > hi) { hi = x; } });
+    for (m = lo; m <= hi; m = nextWhite(m, 1)) { keys.push(m); }
+    var up = true;
+    while (keys.length < 8) {
+      if (up) { keys.push(nextWhite(keys[keys.length - 1], 1)); } else { keys.unshift(nextWhite(keys[0], -1)); }
+      up = !up;
+    }
+    return keys;
+  }
+  var KEY_COLORS = ['#ef4b5c', '#ff6f3c', '#ff9f1c', '#ffd23f', '#9ed84b', '#3fc27a', '#2ec4b6', '#3b8beb', '#8f5ce0', '#ff7eb6', '#ef4b5c'];
   var SONGS = [
     { flag: '1f1eb-1f1f7', n: { fr: 'Frère Jacques', en: 'Frère Jacques', de: 'Bruder Jakob', ru: 'Братец Яков' },
-      notes: [3, 4, 5, 3, 3, 4, 5, 3, 5, 6, 7, 5, 6, 7, 7, 8, 7, 6, 5, 3, 7, 8, 7, 6, 5, 3, 3, 0, 3, 3, 0, 3] },
+      notes: 'C4 D4 E4 C4 C4 D4 E4 C4 E4 F4 G4 E4 F4 G4 G4 A4 G4 F4 E4 C4 G4 A4 G4 F4 E4 C4 C4 G3 C4 C4 G3 C4' },
     { flag: '1f1eb-1f1f7', n: { fr: 'Ah ! vous dirai-je maman', en: 'Twinkle Twinkle Little Star', de: 'Morgen kommt der Weihnachtsmann', ru: 'Ах, скажу я вам, мама' },
-      notes: [3, 3, 7, 7, 8, 8, 7, 6, 6, 5, 5, 4, 4, 3, 7, 7, 6, 6, 5, 5, 4, 7, 7, 6, 6, 5, 5, 4, 3, 3, 7, 7, 8, 8, 7, 6, 6, 5, 5, 4, 4, 3] },
+      notes: 'C4 C4 G4 G4 A4 A4 G4 F4 F4 E4 E4 D4 D4 C4 G4 G4 F4 F4 E4 E4 D4 G4 G4 F4 F4 E4 E4 D4 C4 C4 G4 G4 A4 A4 G4 F4 F4 E4 E4 D4 D4 C4' },
     { flag: '1f1eb-1f1f7', n: { fr: 'Au clair de la lune', en: 'Au clair de la lune', de: 'Au clair de la lune', ru: 'При свете луны' },
-      notes: [3, 3, 3, 4, 5, 4, 3, 5, 4, 4, 3, 3, 3, 3, 4, 5, 4, 3, 5, 4, 4, 3, 4, 4, 4, 4, 1, 1, 4, 3, 2, 1, 0, 3, 3, 3, 4, 5, 4, 3, 5, 4, 4, 3] },
+      notes: 'C4 C4 C4 D4 E4 D4 C4 E4 D4 D4 C4 C4 C4 C4 D4 E4 D4 C4 E4 D4 D4 C4 D4 D4 D4 D4 A3 A3 D4 C4 B3 A3 G3 C4 C4 C4 D4 E4 D4 C4 E4 D4 D4 C4' },
     { flag: '1f1f7-1f1fa', n: { fr: 'В лесу родилась ёлочка', en: 'В лесу родилась ёлочка', de: 'В лесу родилась ёлочка', ru: 'В лесу родилась ёлочка' },
-      notes: [0, 5, 5, 4, 5, 3, 0, 0, 0, 5, 5, 6, 4, 7, 7, 8, 8, 6, 6, 5, 4, 3, 7, 5, 5, 4, 5, 3] },
+      notes: 'G3 E4 E4 D4 E4 C4 G3 G3 G3 E4 E4 F4 D4 G4 G4 A4 A4 F4 F4 E4 D4 C4 G4 E4 E4 D4 E4 C4' },
+    { flag: '1f1f7-1f1fa', n: { fr: 'Маленькой ёлочке', en: 'Маленькой ёлочке', de: 'Маленькой ёлочке', ru: 'Маленькой ёлочке холодно зимой' },
+      notes: 'G4 E4 E4 G4 E4 E4 G4 F4 E4 D4 C4 A4 C5 A4 G4 E4 E4 G4 F4 E4 D4 C4' },
+    { flag: '1f1f7-1f1fa', n: { fr: 'Жили у бабуси', en: 'Жили у бабуси', de: 'Жили у бабуси', ru: 'Жили у бабуси' },
+      notes: 'F4 E4 D4 C4 G4 G4 F4 E4 D4 C4 G4 G4 F4 A4 A4 F4 E4 G4 G4 E4 D4 E4 F4 D4 C4 C4' },
     { flag: '1f30d', n: { fr: 'Joyeux anniversaire', en: 'Happy Birthday', de: 'Zum Geburtstag viel Glück', ru: 'С днём рождения' },
-      notes: [0, 0, 1, 0, 3, 2, 0, 0, 1, 0, 4, 3, 0, 0, 7, 5, 3, 2, 1, 6, 6, 5, 3, 4, 3] },
+      notes: 'G3 G3 A3 G3 C4 B3 G3 G3 A3 G3 D4 C4 G3 G3 G4 E4 C4 B3 A3 F4 F4 E4 C4 D4 C4' },
     { flag: '1f30d', n: { fr: 'Ode à la joie', en: 'Ode to Joy', de: 'Ode an die Freude', ru: 'Ода к радости' },
-      notes: [5, 5, 6, 7, 7, 6, 5, 4, 3, 3, 4, 5, 5, 4, 4, 5, 5, 6, 7, 7, 6, 5, 4, 3, 3, 4, 5, 4, 3, 3] }
+      notes: 'E4 E4 F4 G4 G4 F4 E4 D4 C4 C4 D4 E4 E4 D4 D4 E4 E4 F4 G4 G4 F4 E4 D4 C4 C4 D4 E4 D4 C4 C4' }
   ];
 
   // Memory themes (pictures).
@@ -541,7 +619,7 @@
         t.style.background = PASTELS[i % PASTELS.length];
         t.innerHTML = '<div style="position:absolute;left:0;right:0;top:0;bottom:' + Math.round(b.s * 0.2) + 'px">' + pic(a.c, b.s * 0.6) + '</div>' +
           '<div class="cap" style="font-size:' + Math.max(15, Math.round(b.s * 0.11)) + 'px;color:#5b4a6d;text-shadow:none">' + cap(aName(a)) + '</div>';
-        onDown(t, function () { restartAnim(t, 'bounce'); SFX.boing(a.f); say(aFull(a)); });
+        onDown(t, function () { restartAnim(t, 'bounce'); animalHello(a); });
       });
       return {};
     }
@@ -566,7 +644,7 @@
           if (a.k === target.k) {
             busy = true;
             addClass(t, 'good'); restartAnim(t, 'bounce');
-            SFX.good(); say(praise() + ' ' + T().animals[a.k][1]);
+            SFX.good(); animalSound(a); api.later(function () { say(praise()); }, 1300);
             done++; ui.set(done);
             api.later(function () { if (done >= goal) { api.win(starsFromMistakes(mistakes, 1, 3)); } else { round(); } }, 1700);
           } else {
@@ -661,7 +739,7 @@
         if (dx * dx + dy * dy < (b.r + 28) * (b.r + 28)) {
           if (cfg.colorMode && b.ci !== target) { mistakes++; restartAnim(b.e, 'wobble'); SFX.bad(); return; }
           burst(b); SFX.pop();
-          if (b.animal) { say(cap(aName(b.animal))); }
+          if (b.animal) { animalSound(b.animal); }
           stage.removeChild(b.e); list.splice(i, 1);
           score++; renderInfo();
           if (score >= goal) {
@@ -702,6 +780,20 @@
     { id: 'boat', s: [['p', 14, 62, 86, 62, 75, 78, 25, 78], ['l', 50, 62, 50, 14], ['p', 53, 17, 53, 58, 80, 58], ['p', 47, 24, 47, 58, 24, 58],
       ['l', 4, 86, 14, 82, 24, 86, 34, 82, 44, 86, 54, 82, 64, 86, 74, 82, 84, 86, 96, 82], ['c', 86, 14, 7]] }
   ];
+  // Fit a drawing as large as possible into a w x h box.
+  function fitPage(page, w, h, margin) {
+    var x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+    function add(x, y) { if (x < x0) { x0 = x; } if (x > x1) { x1 = x; } if (y < y0) { y0 = y; } if (y > y1) { y1 = y; } }
+    each(page.s, function (sh) {
+      var t = sh[0], i;
+      if (t === 'c') { add(sh[1] - sh[3], sh[2] - sh[3]); add(sh[1] + sh[3], sh[2] + sh[3]); }
+      else if (t === 'e') { add(sh[1] - sh[3], sh[2] - sh[4]); add(sh[1] + sh[3], sh[2] + sh[4]); }
+      else if (t === 'r') { add(sh[1], sh[2]); add(sh[1] + sh[3], sh[2] + sh[4]); }
+      else { for (i = 1; i < sh.length; i += 2) { add(sh[i], sh[i + 1]); } }
+    });
+    var sc = Math.min((w - 2 * margin) / (x1 - x0), (h - 2 * margin) / (y1 - y0));
+    return { sc: sc, ox: (w - (x1 - x0) * sc) / 2 - x0 * sc, oy: (h - (y1 - y0) * sc) / 2 - y0 * sc };
+  }
   function drawPage(c, page, ox, oy, sc, lw) {
     c.lineWidth = lw; c.lineJoin = 'round'; c.lineCap = 'round';
     each(page.s, function (sh) {
@@ -832,7 +924,6 @@
           var it = el('div', 'pitem' + (code === stampCode && mode === 'stamp' ? ' sel' : ''), grid, pic(code, 60));
           onPress(it, function () {
             stampCode = code; mode = 'stamp'; renderSel(); SFX.boing(400); closePanel();
-            for (var k = 0; k < ANIMALS.length; k++) { if (ANIMALS[k].c === code) { say(cap(aName(ANIMALS[k]))); } }
           });
         });
       }
@@ -854,8 +945,7 @@
       page = pg; mask = null;
       outline.c.clearRect(0, 0, w, ch);
       if (!pg) { return; }
-      var size = Math.min(w - 40, ch - 30), sc = size / 100;
-      var ox = (w - size) / 2, oy = (ch - size) / 2 + 5;
+      var fit = fitPage(pg, w, ch - 24, 26), sc = fit.sc, ox = fit.ox, oy = fit.oy;
       outline.c.strokeStyle = '#3d2c4f';
       drawPage(outline.c, pg, ox, oy, sc, 6);
       // Boundary map for the fill tool, at 1 pixel per screen point.
@@ -880,7 +970,7 @@
         var tc = el('canvas', '', it);
         tc.width = 144 * ratio; tc.height = 106 * ratio; tc.style.width = '144px'; tc.style.height = '106px';
         var tctx = tc.getContext('2d'); tctx.setTransform(ratio, 0, 0, ratio, 0, 0); tctx.strokeStyle = '#3d2c4f';
-        drawPage(tctx, pg, 25, 4, 0.98, 2.5);
+        var tf = fitPage(pg, 144, 106, 8); drawPage(tctx, pg, tf.ox, tf.oy, tf.sc, 2.5);
         onPress(it, function () { setPage(pg); SFX.fill(); closePanel(); });
       });
     });
@@ -1019,7 +1109,7 @@
         busy0 = true; api.later(function () { busy0 = false; }, 600);
         if (!sl0.open) {
           setOpen(sl0, true); tone(400, 0.25, 'triangle', 0.35, 900);
-          say(T().games.peek.t + ' ! ' + aFull(sl0.animal));
+          animalHello(sl0.animal, T().games.peek.t + ' !');
           restartAnim(sl0.face, 'bounce');
         } else {
           setOpen(sl0, false); tone(500, 0.25, 'triangle', 0.3, 250);
@@ -1068,7 +1158,7 @@
       each(slots, function (s, i) { s.e.style.display = ''; moveTo(s, i); setAnimal(s, i === hidden ? a : null, g.size); });
       target = a;
       setOpen(slots[hidden], true);
-      say(T().look + ' ' + aFull(a));
+      say(T().look); api.later(function () { animalSound(a); }, 900);
       var swaps = 2 + Math.min(done, 3), k = 0;
       function swapOnce() {
         if (k >= swaps) { api.later(function () { busy = false; say(where(target)); }, 500); return; }
@@ -1091,7 +1181,7 @@
         if (sl.animal && sl.animal.k === target.k) {
           busy = true;
           restartAnim(sl.face, 'bounce');
-          SFX.good(); say(praise() + ' ' + T().animals[sl.animal.k][1]);
+          SFX.good(); animalSound(sl.animal); api.later(function () { say(praise()); }, 1300);
           done++; ui.set(done);
           api.later(function () {
             closeAll();
@@ -1118,8 +1208,11 @@
     var stage = api.stage;
     var mode = api.level, pos = 0, mistakes = 0, finished = false;
     if (songIdx >= SONGS.length) { songIdx = 0; }
-    var song = SONGS[songIdx].notes;
-    var nk = NOTES.length, kw = api.w / nk, keys = [];
+    var songNotes = SONGS[songIdx].notes.split(' ');
+    var keyMidi = mode === 0 ? DEFAULT_KEYS.map(midiOf) : songKeys(songNotes);
+    var KF = keyMidi.map(freqOf);
+    var song = songNotes.map(function (n) { return keyMidi.indexOf(midiOf(n)); });
+    var nk = KF.length, kw = api.w / nk, keys = [];
     var NOTE_PICS = ['1f3b5', '1f3b6', '2b50', '2764', '2728'];
 
     function renderInfo() {
@@ -1156,10 +1249,10 @@
       finished = true; showHint();
       api.later(function () { api.win(mode === 1 ? 3 : starsFromMistakes(mistakes, 2, 5)); }, 800);
     }
-    each(NOTES, function (f, i) {
+    each(KF, function (f, i) {
       var k = el('div', 'key', stage, '<div class="gloss"></div>');
       place(k, i * kw, 0, kw, api.h);
-      k.style.background = KEY_COLORS[i];
+      k.style.background = KEY_COLORS[i % KEY_COLORS.length];
       var hint = el('div', '', k, '<div class="hand">' + img('1f447', 80) + '</div><div class="hint">' + img('1f31f', 70) + '</div>');
       hint.style.display = 'none';
       keys.push({ e: k, hint: hint });
@@ -1169,7 +1262,7 @@
         if (mode === 0 || finished) { tone(f, 0.6, 'triangle', 0.4); light(i); floatNote(i, y); return; }
         if (mode === 1) {
           var ni = song[pos];
-          tone(NOTES[ni], 0.6, 'triangle', 0.4); light(ni); floatNote(ni, y);
+          tone(KF[ni], 0.6, 'triangle', 0.4); light(ni); floatNote(ni, y);
           pos++; renderInfo();
           if (pos >= song.length) { songDone(); }
           return;
@@ -1251,7 +1344,7 @@
             restartAnim(c1, 'bounce'); restartAnim(c2, 'bounce');
             SFX.good();
             var an = animalFor(c1.code);
-            say(an ? aFull(an) : praise());
+            if (an) { animalHello(an); } else { say(praise()); }
             found++; renderInfo(); busy = false;
             if (found === pairs) {
               var s = moves <= pairs + 1 ? 3 : (moves <= pairs * 2 ? 2 : 1);

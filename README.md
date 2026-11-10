@@ -19,3 +19,14 @@ Code is plain ES5 (no modern JavaScript) so it runs on Safari 9.
 
 Credits: pictures from [Twemoji](https://github.com/jdecked/twemoji) (© Twitter, Inc. and contributors, CC-BY 4.0).
 Font: [Fredoka](https://fonts.google.com/specimen/Fredoka) (SIL Open Font License).
+
+### Animal sounds
+
+Recordings from Wikimedia Commons, trimmed and volume-levelled:
+
+- **cat**: [Meow of a pleading cat.oga](https://commons.wikimedia.org/wiki/File:Meow_of_a_pleading_cat.oga), by Heismark, Public domain
+- **cow**: [Single Cow Moo.ogg](https://commons.wikimedia.org/wiki/File:Single_Cow_Moo.ogg), by MichaeltheFox8621, CC BY-SA 4.0
+- **dog**: [Barking of a dog.ogg](https://commons.wikimedia.org/wiki/File:Barking_of_a_dog.ogg), by Amada44, CC BY-SA 3.0
+- **elephant**: [Elephant voice - trumpeting.ogg](https://commons.wikimedia.org/wiki/File:Elephant_voice_-_trumpeting.ogg), by தகவலுழவன், CC0
+- **lion**: [Lion raring-sound1TamilNadu178.ogg](https://commons.wikimedia.org/wiki/File:Lion_raring-sound1TamilNadu178.ogg), by த*உழவன், Public domain
+- **pig**: [Mudchute pig 2.ogg](https://commons.wikimedia.org/wiki/File:Mudchute_pig_2.ogg), by Secretlondon, CC BY-SA 3.0

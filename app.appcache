@@ -1,5 +1,5 @@
 CACHE MANIFEST
-# v6
+# v7
 index.html
 js/i18n.js
 js/i18n2.js
@@ -94,6 +94,12 @@ fonts/fredoka-latin-500-normal.woff
 fonts/fredoka-latin-500-normal.woff2
 fonts/fredoka-latin-600-normal.woff
 fonts/fredoka-latin-600-normal.woff2
+sounds/animals/cat.mp3
+sounds/animals/cow.mp3
+sounds/animals/dog.mp3
+sounds/animals/elephant.mp3
+sounds/animals/lion.mp3
+sounds/animals/pig.mp3
 
 NETWORK:
 *
