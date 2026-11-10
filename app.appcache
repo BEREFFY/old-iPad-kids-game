@@ -1,24 +1,45 @@
 CACHE MANIFEST
-# v3
+# v5
 index.html
+js/i18n.js
+js/app.js
 icon.png
 e/1f0cf.svg
+e/1f308.svg
+e/1f31f.svg
+e/1f388.svg
 e/1f3a8.svg
 e/1f3b5.svg
 e/1f3b9.svg
+e/1f3c6.svg
 e/1f411.svg
+e/1f418.svg
 e/1f425.svg
 e/1f42e.svg
+e/1f430.svg
 e/1f431.svg
+e/1f434.svg
 e/1f435.svg
 e/1f436.svg
 e/1f437.svg
 e/1f438.svg
+e/1f43b.svg
+e/1f43e.svg
+e/1f4a1.svg
+e/1f4a5.svg
 e/1f535.svg
+e/1f58c.svg
 e/1f648.svg
 e/1f981.svg
+e/1f986.svg
+e/1f989.svg
+e/2728.svg
 e/2764.svg
 e/2b50.svg
+fonts/fredoka-latin-500-normal.woff
+fonts/fredoka-latin-500-normal.woff2
+fonts/fredoka-latin-600-normal.woff
+fonts/fredoka-latin-600-normal.woff2
 
 NETWORK:
 *
