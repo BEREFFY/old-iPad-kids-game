@@ -190,7 +190,7 @@
   ];
   function aName(a) { return T().animals[a.k][0]; }
   // Real animal recordings (sounds/animals/*.mp3), decoded once and played with Web Audio.
-  var ANIMAL_REC = { cat: 1, cow: 1, dog: 1, elephant: 1, lion: 1, pig: 1 };
+  var ANIMAL_REC = { cat: 1, cow: 1, dog: 1, elephant: 1, frog: 1, horse: 1, lion: 1, pig: 1, sheep: 1 };
   var recBuf = {}, recLoading = false;
   function loadRecordings() {
     if (recLoading || !actx) { return; }

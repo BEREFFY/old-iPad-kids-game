@@ -1,11 +1,20 @@
 CACHE MANIFEST
-# v7
+# v8
 index.html
 js/i18n.js
 js/i18n2.js
 js/app.js
 icon.png
 sounds/silence.wav
+sounds/animals/cat.mp3
+sounds/animals/cow.mp3
+sounds/animals/dog.mp3
+sounds/animals/elephant.mp3
+sounds/animals/frog.mp3
+sounds/animals/horse.mp3
+sounds/animals/lion.mp3
+sounds/animals/pig.mp3
+sounds/animals/sheep.mp3
 e/1f0cf.svg
 e/1f1e9-1f1ea.svg
 e/1f1eb-1f1f7.svg
@@ -94,12 +103,6 @@ fonts/fredoka-latin-500-normal.woff
 fonts/fredoka-latin-500-normal.woff2
 fonts/fredoka-latin-600-normal.woff
 fonts/fredoka-latin-600-normal.woff2
-sounds/animals/cat.mp3
-sounds/animals/cow.mp3
-sounds/animals/dog.mp3
-sounds/animals/elephant.mp3
-sounds/animals/lion.mp3
-sounds/animals/pig.mp3
 
 NETWORK:
 *
