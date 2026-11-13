@@ -3,8 +3,6 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Petits Jeux">
 <link rel="apple-touch-icon" href="icon.png">
 <title>Petits Jeux</title>
@@ -311,6 +309,12 @@
 </div>
 
 <div id="overlay"><div id="sheet"></div></div>
+
+<div id="oldIcon" style="display:none;position:absolute;left:16px;right:16px;top:16px;z-index:50;background:#fff3c4;color:#5a3d00;border-radius:18px;padding:14px 18px;font-size:19px;line-height:1.35;box-shadow:0 4px 14px rgba(0,0,0,.2)">
+  🔇 Pas de son avec cette icône : supprimez-la, ouvrez le site dans Safari, puis Partager → « Sur l'écran d'accueil ».<br>
+  No sound with this icon: delete it, open the site in Safari, then Share → "Add to Home Screen".
+</div>
+<script>if (window.navigator.standalone) { document.getElementById('oldIcon').style.display = 'block'; }</script>
 
 <script src="js/i18n.js"></script>
 <script src="js/i18n2.js"></script>
