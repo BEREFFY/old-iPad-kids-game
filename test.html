@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Test son">
+<link rel="apple-touch-icon" href="icon.png">
+<title>Test son</title>
+<style>
+  body { margin: 0; padding: 30px 30px 20px; background: #fff7e0; font-family: -apple-system, Helvetica, Arial, sans-serif; color: #4a3500; }
+  h1 { margin: 0 0 6px; font-size: 30px; }
+  #mode { font-size: 20px; margin-bottom: 18px; }
+  .ok { color: #1b7a2b; font-weight: bold; }
+  .bad { color: #b3261e; font-weight: bold; }
+  .btn { display: block; margin: 0 0 16px; padding: 22px 26px; border-radius: 22px; font-size: 26px; font-weight: bold; color: #fff; -webkit-user-select: none; cursor: pointer; }
+  .btn span { display: block; font-size: 17px; font-weight: normal; opacity: .9; margin-top: 4px; }
+  #b1 { background: #e8505b; } #b2 { background: #3a86e0; } #b3 { background: #2fa36b; } #b4 { background: #9b59b6; }
+  #log { font-family: Menlo, monospace; font-size: 14px; white-space: pre-wrap; background: #fff; border-radius: 12px; padding: 12px; min-height: 60px; }
+</style>
+</head>
+<body>
+<h1>Test son / Sound test</h1>
+<div id="mode"></div>
+
+<div class="btn" id="b1">1 · Bip<span>Son généré / generated beep</span></div>
+<div class="btn" id="b2">2 · Vache / Cow<span>Fichier enregistré / recorded file</span></div>
+<div class="btn" id="b3">3 · Voix / Voice<span>« Bonjour ! »</span></div>
+<div class="btn" id="b4">4 · Bip + astuce<span>Bip après l'astuce du mode silencieux / beep after the mute trick</span></div>
+
+<div id="log"></div>
+
+<script>
+var logEl = document.getElementById('log');
+function log(t) { logEl.textContent += t + '\n'; }
+window.onerror = function (m) { log('ERROR ' + m); };
+
+var standalone = !!window.navigator.standalone;
+document.getElementById('mode').innerHTML = standalone
+  ? '<span class="ok">✓ Plein écran (icône) / Full screen (icon)</span>'
+  : '<span class="bad">Safari</span> — ouvrez depuis l\'icône / open from the icon';
+
+var actx = null;
+function getCtx() {
+  if (!actx) {
+    var C = window.AudioContext || window.webkitAudioContext;
+    if (!C) { log('no Web Audio'); return null; }
+    actx = new C();
+    log('AudioContext created, rate ' + actx.sampleRate);
+  }
+  // Play a silent buffer: the iOS 9 unlock
+  var b = actx.createBuffer(1, 1, 22050), s = actx.createBufferSource();
+  s.buffer = b; s.connect(actx.destination);
+  if (s.start) { s.start(0); } else { s.noteOn(0); }
+  if (actx.resume) { actx.resume(); }
+  return actx;
+}
+function beep() {
+  var c = getCtx(); if (!c) { return; }
+  var o = c.createOscillator(), g = c.createGain(), t = c.currentTime;
+  o.type = 'triangle'; o.frequency.value = 660;
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.linearRampToValueAtTime(0.5, t + 0.02);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.8);
+  o.connect(g); g.connect(c.destination);
+  if (o.start) { o.start(t); o.stop(t + 0.85); } else { o.noteOn(t); o.noteOff(t + 0.85); }
+  log('beep sent, state ' + (c.state || '?'));
+}
+
+var cow = null;
+function playCow() {
+  if (!cow) { cow = new Audio('sounds/animals/cow.mp3'); }
+  cow.currentTime = 0;
+  var p = cow.play();
+  if (p && p.then) { p.then(function () { log('cow playing'); }, function (e) { log('cow blocked: ' + e); }); }
+  else { log('cow play() called'); }
+}
+
+function voice() {
+  if (!window.speechSynthesis) { log('no speechSynthesis'); return; }
+  var u = new SpeechSynthesisUtterance('Bonjour !');
+  u.lang = 'fr-FR'; u.rate = 0.9;
+  u.onstart = function () { log('voice started'); };
+  u.onend = function () { log('voice ended'); };
+  u.onerror = function (e) { log('voice error ' + (e.error || '')); };
+  speechSynthesis.cancel(); speechSynthesis.speak(u);
+  log('voice sent (' + speechSynthesis.getVoices().length + ' voices)');
+}
+
+var silent = null;
+function trickBeep() {
+  if (!silent) {
+    silent = new Audio('sounds/silence.wav'); silent.loop = true;
+  }
+  var p = silent.play();
+  if (p && p.then) { p.then(function () { log('silent loop on'); }, function (e) { log('silent loop blocked: ' + e); }); }
+  setTimeout(beep, 300);
+}
+
+// iOS 9 only allows sound from touchend / click
+function bind(id, fn) {
+  var el = document.getElementById(id), touched = false;
+  el.addEventListener('touchend', function (e) { e.preventDefault(); touched = true; fn(); }, false);
+  el.addEventListener('click', function () { if (!touched) { fn(); } touched = false; }, false);
+}
+bind('b1', beep); bind('b2', playCow); bind('b3', voice); bind('b4', trickBeep);
+log('ready, iOS: ' + (navigator.userAgent.match(/OS [\d_]+/) || ['?'])[0]);
+</script>
+</body>
+</html>
