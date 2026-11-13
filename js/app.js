@@ -61,6 +61,7 @@
       '<path d="M16 8.5a5 5 0 0 1 0 7M18.8 5.8a9 9 0 0 1 0 12.4" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>',
     play: '<svg viewBox="0 0 24 24"><path fill="#fff" d="M7 4.5c0-1 1-1.5 1.8-1L20 10.6c.8.6.8 1.8 0 2.4L8.8 20.5c-.8.5-1.8 0-1.8-1z"/></svg>',
     playSmall: '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M7 4.5c0-1 1-1.5 1.8-1L20 10.6c.8.6.8 1.8 0 2.4L8.8 20.5c-.8.5-1.8 0-1.8-1z"/></svg>',
+    undo: SVGA + '<path d="M9 14L4 9l5-5"/><path d="M4 9h10a5.5 5.5 0 0 1 0 11h-3"/></svg>',
     trash: SVGA + '<path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13"/></svg>'
   };
   function star(filled) {
@@ -493,6 +494,8 @@
     game = gameById(id);
     var saved = store('level_' + id);
     level = (saved !== null && saved < game.levels) ? saved : 0;
+    // Games with automatic levels always start fresh at level 1.
+    if (game.auto) { level = 0; autoWins[id] = {}; store('autoWins', autoWins); }
     showScreen('game');
     startLevel(level);
   }
@@ -884,8 +887,10 @@
     place(back, 16, 16);
     onPress(back, function () { SFX.click(); openMenu(); });
 
-    var mode = 'brush', colorIdx = store('paintColor');
-    if (colorIdx === null || colorIdx > 8) { colorIdx = 0; }
+    // Painting colours: the 8 game colours plus black; the rainbow comes last.
+    var PCOLORS = COLORS.concat(['#2b2730']), RAINBOW = PCOLORS.length;
+    var mode = 'brush', colorIdx = store('paintColor2');
+    if (colorIdx === null || colorIdx > RAINBOW) { colorIdx = 0; }
     var hue = 0, SIZES = [12, 28, 52], STAMP_SIZES = [80, 120, 170], sizeIdx = 1, stampCode = null;
     var page = null, mask = null, mw = Math.round(w), mh = Math.round(ch);
 
@@ -899,23 +904,26 @@
     renderSizeBtn();
     el('div', 'sep', bar);
     var colorEls = [];
-    for (var ci = 0; ci < 9; ci++) {
+    for (var ci = 0; ci <= RAINBOW; ci++) {
       (function (ci) {
         var sw = el('div', 'sw', bar);
-        if (ci < 8) { sw.style.background = COLORS[ci]; }
+        if (ci < RAINBOW) { sw.style.background = PCOLORS[ci]; }
         else { sw.style.backgroundImage = 'linear-gradient(135deg, #ef4b5c, #ff8a2a, #ffd23f, #3fc27a, #3b8beb, #8f5ce0)'; }
         colorEls.push(sw);
         onPress(sw, function () {
-          colorIdx = ci; store('paintColor', ci); mode = 'brush';
+          colorIdx = ci; store('paintColor2', ci); mode = 'brush';
           renderSel();
-          tone(NOTES[ci + 1], 0.15, 'sine', 0.25);
-          if (ci < 8) { say(cap(T().colors[ci])); }
+          tone(NOTES[ci], 0.15, 'sine', 0.25);
+          if (ci < 8) { say(cap(T().colors[ci])); } else if (ci < RAINBOW) { say(cap(T().black)); }
         });
       })(ci);
     }
     el('div', 'sep', bar);
     var stampBtn = el('div', 'sw tool', bar);
     var pageBtn = el('div', 'sw tool', bar, pic('1f5bc', 36));
+    el('div', 'sep', bar);
+    var undoBtn = el('div', 'sw tool', bar, ICON.undo);
+    undoBtn.style.color = '#3d2c4f';
     var trashBtn = el('div', 'sw tool', bar, ICON.trash);
     trashBtn.style.color = '#ef4b5c'; trashBtn.style.background = '#fff0f2';
     function renderSel() {
@@ -978,9 +986,40 @@
     }
     onPress(stampBtn, function () { SFX.click(); openStamps(); });
 
+    // ----- undo: a few snapshots of the drawing and the stamps -----
+    var history = [], snapped = false;
+    function renderUndo() { undoBtn.style.opacity = history.length ? '1' : '0.35'; }
+    function snapshot(withCanvas) {
+      var copy = null;
+      if (withCanvas) {
+        copy = document.createElement('canvas');
+        copy.width = paint.cv.width; copy.height = paint.cv.height;
+        copy.getContext('2d').drawImage(paint.cv, 0, 0);
+      }
+      history.push({ img: copy, stamps: stamps.innerHTML });
+      if (history.length > 8) { history.shift(); }
+      renderUndo();
+    }
+    // Called just before a stroke or fill changes the drawing (once per touch).
+    function snapOnce() { if (!snapped) { snapped = true; snapshot(true); } }
+    function undo() {
+      var h = history.pop();
+      if (!h) { return; }
+      if (h.img) {
+        c.save(); c.setTransform(1, 0, 0, 1, 0, 0);
+        c.clearRect(0, 0, paint.cv.width, paint.cv.height); c.drawImage(h.img, 0, 0);
+        c.restore();
+      }
+      stamps.innerHTML = h.stamps;
+      renderUndo();
+    }
+    onPress(undoBtn, function () { if (history.length) { SFX.swoosh(); undo(); } });
+    renderUndo();
+
     function clearAll() { c.clearRect(0, 0, w, ch); stamps.innerHTML = ''; }
     function setPage(pg) {
       clearAll();
+      history = []; renderUndo();
       page = pg; mask = null;
       outline.c.clearRect(0, 0, w, ch);
       if (!pg) { return; }
@@ -1013,10 +1052,15 @@
         onPress(it, function () { setPage(pg); SFX.fill(); closePanel(); });
       });
     });
-    onPress(trashBtn, function () { setPage(page); SFX.swoosh(); });
+    onPress(trashBtn, function () {
+      // Clearing can be undone too: keep the history across setPage.
+      snapshot(true);
+      var h = history;
+      setPage(page); history = h; renderUndo(); SFX.swoosh();
+    });
 
     // ----- fill (colouring pages) -----
-    function currentColor() { return colorIdx === 8 ? pick(COLORS) : COLORS[colorIdx]; }
+    function currentColor() { return colorIdx === RAINBOW ? pick(COLORS) : PCOLORS[colorIdx]; }
     function fillAt(x, y) {
       if (!mask) { return; }
       x = Math.round(x); y = Math.round(y);
@@ -1036,6 +1080,7 @@
         }
       }
       if (!count) { return; }
+      snapOnce();
       var col = currentColor();
       var rr = parseInt(col.substr(1, 2), 16), gg = parseInt(col.substr(3, 2), 16), bb = parseInt(col.substr(5, 2), 16);
       var tmp = document.createElement('canvas'); tmp.width = mw; tmp.height = mh;
@@ -1055,10 +1100,11 @@
     var pts = {};
     function strokeTo(id, x, y) {
       var p = pts[id];
-      if (colorIdx === 8) {
+      snapOnce();
+      if (colorIdx === RAINBOW) {
         hue = (hue + (p && p.x !== null ? Math.sqrt((x - p.x) * (x - p.x) + (y - p.y) * (y - p.y)) * 0.6 : 8)) % 360;
         c.strokeStyle = 'hsl(' + Math.round(hue) + ',90%,56%)';
-      } else { c.strokeStyle = COLORS[colorIdx]; }
+      } else { c.strokeStyle = PCOLORS[colorIdx]; }
       c.lineWidth = SIZES[sizeIdx];
       c.beginPath();
       if (p && p.x !== null) { c.moveTo(p.x, p.y); } else { c.moveTo(x - 0.1, y); }
@@ -1069,6 +1115,7 @@
       if (y > ch) { return; }
       if (mode === 'stamp') {
         var size = STAMP_SIZES[sizeIdx];
+        snapshot(false);
         var s = el('div', 'stamp', stamps, img(stampCode, size));
         s.style.left = (x - size / 2) + 'px'; s.style.top = (y - size / 2) + 'px';
         setTransform(s.firstChild, 'rotate(' + Math.round(rand(-15, 15)) + 'deg)');
@@ -1094,6 +1141,9 @@
       var p = pts[id];
       if (page && p && !p.moved && mode === 'brush') { fillAt(p.sx, p.sy); }
       delete pts[id];
+      // All fingers lifted: the next touch is a new step for undo.
+      var any = false; for (var k in pts) { if (pts.hasOwnProperty(k)) { any = true; } }
+      if (!any) { snapped = false; }
     }
     var cv = paint.cv;
     cv.addEventListener('touchstart', function (ev) {

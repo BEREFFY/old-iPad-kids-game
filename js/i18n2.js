@@ -3,6 +3,7 @@
   var X = {
     fr: {
       look: 'Regarde bien !',
+      black: 'noir',
       songsLabel: 'Chansons',
       themeLabel: 'Thème',
       themes: ['Animaux', 'Véhicules', 'Fruits & légumes', 'La mer'],
@@ -25,6 +26,7 @@
     },
     en: {
       look: 'Look carefully!',
+      black: 'black',
       songsLabel: 'Songs',
       themeLabel: 'Theme',
       themes: ['Animals', 'Vehicles', 'Fruit & veg', 'The sea'],
@@ -47,6 +49,7 @@
     },
     de: {
       look: 'Schau genau hin!',
+      black: 'Schwarz',
       songsLabel: 'Lieder',
       themeLabel: 'Thema',
       themes: ['Tiere', 'Fahrzeuge', 'Obst & Gemüse', 'Das Meer'],
@@ -69,6 +72,7 @@
     },
     ru: {
       look: 'Смотри внимательно!',
+      black: 'чёрный',
       songsLabel: 'Песни',
       themeLabel: 'Тема',
       themes: ['Животные', 'Транспорт', 'Фрукты и овощи', 'Море'],
