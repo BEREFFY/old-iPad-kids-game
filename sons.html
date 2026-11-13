@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Sons des animaux</title>
+<style>
+body { margin: 0; padding: 24px 16px; background: #fff7e0; font-family: -apple-system, Helvetica, Arial, sans-serif; color: #4a3500; }
+h1 { font-size: 28px; margin: 0 0 6px; } p { margin: 0 0 18px; font-size: 17px; }
+.row { display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; background: #fff;
+  border-radius: 18px; padding: 8px 12px; margin-bottom: 10px; }
+.row img { width: 52px; height: 52px; margin-right: 12px; }
+.row span { width: 130px; font-size: 20px; font-weight: bold; }
+.b { width: 58px; height: 58px; line-height: 58px; text-align: center; border-radius: 29px; margin-right: 12px;
+  background: #3a86e0; color: #fff; font-size: 24px; font-weight: bold; cursor: pointer; -webkit-user-select: none; }
+.b.sel { background: #2fa36b; box-shadow: 0 0 0 4px #bfe8cf; }
+.b.on { background: #ff5d8f; }
+</style></head><body>
+<h1>Sons des animaux / Animal sounds</h1>
+<p>Touchez les numéros pour écouter. <b style="color:#2fa36b">Vert</b> = le son actuel du jeu.<br>
+Tap the numbers to listen. <b style="color:#2fa36b">Green</b> = the sound the game uses now.</p>
+<div class="row"><img src="e/1f42e.svg"><span>Vache</span><div class="b" data-f="sounds/choices/cow_1.mp3">1</div><div class="b sel" data-f="sounds/choices/cow_2.mp3">2</div><div class="b" data-f="sounds/choices/cow_3.mp3">3</div><div class="b" data-f="sounds/choices/cow_4.mp3">4</div></div>
+<div class="row"><img src="e/1f437.svg"><span>Cochon</span><div class="b sel" data-f="sounds/choices/pig_1.mp3">1</div><div class="b" data-f="sounds/choices/pig_2.mp3">2</div><div class="b" data-f="sounds/choices/pig_3.mp3">3</div></div>
+<div class="row"><img src="e/1f436.svg"><span>Chien</span><div class="b" data-f="sounds/choices/dog_1.mp3">1</div><div class="b sel" data-f="sounds/choices/dog_2.mp3">2</div><div class="b" data-f="sounds/choices/dog_3.mp3">3</div><div class="b" data-f="sounds/choices/dog_4.mp3">4</div></div>
+<div class="row"><img src="e/1f431.svg"><span>Chat</span><div class="b" data-f="sounds/choices/cat_1.mp3">1</div><div class="b" data-f="sounds/choices/cat_2.mp3">2</div><div class="b sel" data-f="sounds/choices/cat_3.mp3">3</div></div>
+<div class="row"><img src="e/1f411.svg"><span>Mouton</span><div class="b" data-f="sounds/choices/sheep_1.mp3">1</div><div class="b" data-f="sounds/choices/sheep_2.mp3">2</div><div class="b" data-f="sounds/choices/sheep_3.mp3">3</div><div class="b sel" data-f="sounds/choices/sheep_4.mp3">4</div></div>
+<div class="row"><img src="e/1f425.svg"><span>Poussin</span><div class="b sel" data-f="sounds/choices/chick_1.mp3">1</div><div class="b" data-f="sounds/choices/chick_2.mp3">2</div><div class="b" data-f="sounds/choices/chick_3.mp3">3</div></div>
+<div class="row"><img src="e/1f413.svg"><span>Coq</span><div class="b sel" data-f="sounds/choices/rooster_1.mp3">1</div><div class="b" data-f="sounds/choices/rooster_2.mp3">2</div><div class="b" data-f="sounds/choices/rooster_3.mp3">3</div></div>
+<div class="row"><img src="e/1f438.svg"><span>Grenouille</span><div class="b sel" data-f="sounds/choices/frog_1.mp3">1</div><div class="b" data-f="sounds/choices/frog_2.mp3">2</div><div class="b" data-f="sounds/choices/frog_3.mp3">3</div><div class="b" data-f="sounds/choices/frog_4.mp3">4</div></div>
+<div class="row"><img src="e/1f981.svg"><span>Lion</span><div class="b sel" data-f="sounds/choices/lion_1.mp3">1</div><div class="b" data-f="sounds/choices/lion_2.mp3">2</div><div class="b" data-f="sounds/choices/lion_3.mp3">3</div></div>
+<div class="row"><img src="e/1f435.svg"><span>Singe</span><div class="b sel" data-f="sounds/choices/monkey_1.mp3">1</div><div class="b" data-f="sounds/choices/monkey_2.mp3">2</div><div class="b" data-f="sounds/choices/monkey_3.mp3">3</div></div>
+<div class="row"><img src="e/1f434.svg"><span>Cheval</span><div class="b" data-f="sounds/choices/horse_1.mp3">1</div><div class="b sel" data-f="sounds/choices/horse_2.mp3">2</div><div class="b" data-f="sounds/choices/horse_3.mp3">3</div></div>
+<div class="row"><img src="e/1f418.svg"><span>Éléphant</span><div class="b sel" data-f="sounds/choices/elephant_1.mp3">1</div><div class="b" data-f="sounds/choices/elephant_2.mp3">2</div></div>
+<div class="row"><img src="e/1f986.svg"><span>Canard</span><div class="b sel" data-f="sounds/choices/duck_1.mp3">1</div><div class="b" data-f="sounds/choices/duck_2.mp3">2</div><div class="b" data-f="sounds/choices/duck_3.mp3">3</div><div class="b" data-f="sounds/choices/duck_4.mp3">4</div></div>
+<div class="row"><img src="e/1f43b.svg"><span>Ours</span><div class="b" data-f="sounds/choices/bear_1.mp3">1</div><div class="b" data-f="sounds/choices/bear_2.mp3">2</div><div class="b sel" data-f="sounds/choices/bear_3.mp3">3</div></div>
+<div class="row"><img src="e/1f989.svg"><span>Hibou</span><div class="b" data-f="sounds/choices/owl_1.mp3">1</div><div class="b sel" data-f="sounds/choices/owl_2.mp3">2</div><div class="b" data-f="sounds/choices/owl_3.mp3">3</div></div>
+<script>
+var cur = null;
+function play(b) {
+  if (cur) { cur.pause(); }
+  var bs = document.querySelectorAll('.b');
+  for (var i = 0; i < bs.length; i++) { bs[i].className = bs[i].className.replace(' on', ''); }
+  b.className += ' on';
+  cur = new Audio(b.getAttribute('data-f'));
+  cur.onended = function () { b.className = b.className.replace(' on', ''); };
+  cur.play();
+}
+var bs = document.querySelectorAll('.b');
+for (var i = 0; i < bs.length; i++) {
+  (function (b) {
+    b.addEventListener('touchend', function (e) { e.preventDefault(); play(b); }, false);
+    b.addEventListener('click', function () { play(b); }, false);
+  })(bs[i]);
+}
+</script></body></html>

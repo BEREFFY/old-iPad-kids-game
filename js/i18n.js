@@ -24,7 +24,7 @@ var I18N = {
       cow: ['la vache', 'Meuh !'], pig: ['le cochon', 'Groin groin !'], dog: ['le chien', 'Ouaf ouaf !'],
       cat: ['le chat', 'Miaou !'], sheep: ['le mouton', 'Bêêê !'], chick: ['le poussin', 'Piou piou !'],
       frog: ['la grenouille', 'Croâ croâ !'], lion: ['le lion', 'Roaaar !'], monkey: ['le singe', 'Hou hou ha ha !'],
-      horse: ['le cheval', 'Hiiii !'], rabbit: ['le lapin', 'Hop hop !'], elephant: ['l’éléphant', 'Pouuuu !'],
+      horse: ['le cheval', 'Hiiii !'], rooster: ['le coq', 'Cocorico !'], elephant: ['l’éléphant', 'Pouuuu !'],
       duck: ['le canard', 'Coin coin !'], bear: ['l’ours', 'Grrr !'], owl: ['le hibou', 'Hou hou !']
     },
     songs: ['Frère Jacques', 'Ah ! vous dirai-je maman', 'Au clair de la lune'],
@@ -82,7 +82,7 @@ var I18N = {
       cow: ['the cow', 'Moo!'], pig: ['the pig', 'Oink oink!'], dog: ['the dog', 'Woof woof!'],
       cat: ['the cat', 'Meow!'], sheep: ['the sheep', 'Baa!'], chick: ['the chick', 'Cheep cheep!'],
       frog: ['the frog', 'Ribbit!'], lion: ['the lion', 'Roar!'], monkey: ['the monkey', 'Ooh ooh ah ah!'],
-      horse: ['the horse', 'Neigh!'], rabbit: ['the rabbit', 'Hop hop!'], elephant: ['the elephant', 'Toot!'],
+      horse: ['the horse', 'Neigh!'], rooster: ['the rooster', 'Cock-a-doodle-doo!'], elephant: ['the elephant', 'Toot!'],
       duck: ['the duck', 'Quack quack!'], bear: ['the bear', 'Grrr!'], owl: ['the owl', 'Hoo hoo!']
     },
     songs: ['Brother John', 'Twinkle Twinkle', 'By the Light of the Moon'],
@@ -140,7 +140,7 @@ var I18N = {
       cow: ['die Kuh', 'Muh!'], pig: ['das Schwein', 'Grunz grunz!'], dog: ['der Hund', 'Wau wau!'],
       cat: ['die Katze', 'Miau!'], sheep: ['das Schaf', 'Mäh!'], chick: ['das Küken', 'Piep piep!'],
       frog: ['der Frosch', 'Quak quak!'], lion: ['der Löwe', 'Roaaar!'], monkey: ['der Affe', 'Uh uh ah ah!'],
-      horse: ['das Pferd', 'Wieher!'], rabbit: ['der Hase', 'Hopp hopp!'], elephant: ['der Elefant', 'Törööö!'],
+      horse: ['das Pferd', 'Wieher!'], rooster: ['der Hahn', 'Kikeriki!'], elephant: ['der Elefant', 'Törööö!'],
       duck: ['die Ente', 'Quak!'], bear: ['der Bär', 'Brumm!'], owl: ['die Eule', 'Huhu!']
     },
     songs: ['Bruder Jakob', 'Morgen kommt der Weihnachtsmann', 'Au clair de la lune'],
@@ -198,7 +198,7 @@ var I18N = {
       cow: ['корова', 'Му-у!'], pig: ['свинка', 'Хрю-хрю!'], dog: ['собачка', 'Гав-гав!'],
       cat: ['кошечка', 'Мяу!'], sheep: ['овечка', 'Бе-е!'], chick: ['цыплёнок', 'Пи-пи-пи!'],
       frog: ['лягушка', 'Ква-ква!'], lion: ['лев', 'Р-р-р!'], monkey: ['обезьянка', 'У-у-а-а!'],
-      horse: ['лошадка', 'И-го-го!'], rabbit: ['зайчик', 'Прыг-скок!'], elephant: ['слон', 'Ту-ту-у!'],
+      horse: ['лошадка', 'И-го-го!'], rooster: ['петушок', 'Ку-ка-ре-ку!'], elephant: ['слон', 'Ту-ту-у!'],
       duck: ['уточка', 'Кря-кря!'], bear: ['мишка', 'Р-р-р!'], owl: ['сова', 'Ух-ух!']
     },
     songs: ['Братец Яков', 'Мерцай, звёздочка', 'При свете луны'],

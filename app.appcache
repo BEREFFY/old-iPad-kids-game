@@ -1,11 +1,26 @@
 CACHE MANIFEST
-# v14 (shown as v1.14 on the start page)
+# v15 (shown as v1.15 on the start page)
 index.html
 js/i18n.js
 js/i18n2.js
 js/app.js
 icon.png
 sounds/silence.wav
+sounds/animals/bear.mp3
+sounds/animals/cat.mp3
+sounds/animals/chick.mp3
+sounds/animals/cow.mp3
+sounds/animals/dog.mp3
+sounds/animals/duck.mp3
+sounds/animals/elephant.mp3
+sounds/animals/frog.mp3
+sounds/animals/horse.mp3
+sounds/animals/lion.mp3
+sounds/animals/monkey.mp3
+sounds/animals/owl.mp3
+sounds/animals/pig.mp3
+sounds/animals/rooster.mp3
+sounds/animals/sheep.mp3
 e/1f0cf.svg
 e/1f1e9-1f1ea.svg
 e/1f1eb-1f1f7.svg
@@ -45,6 +60,7 @@ e/1f3b9.svg
 e/1f3c6.svg
 e/1f3ce.svg
 e/1f411.svg
+e/1f413.svg
 e/1f418.svg
 e/1f419.svg
 e/1f41a.svg
@@ -131,15 +147,6 @@ e/2728.svg
 e/2744.svg
 e/2764.svg
 e/2b50.svg
-sounds/animals/cat.mp3
-sounds/animals/cow.mp3
-sounds/animals/dog.mp3
-sounds/animals/elephant.mp3
-sounds/animals/frog.mp3
-sounds/animals/horse.mp3
-sounds/animals/lion.mp3
-sounds/animals/pig.mp3
-sounds/animals/sheep.mp3
 fonts/fredoka-latin-500-normal.woff
 fonts/fredoka-latin-500-normal.woff2
 fonts/fredoka-latin-600-normal.woff

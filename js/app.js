@@ -102,7 +102,12 @@
   // From a home-screen icon (full screen) iOS 9 cannot play <audio>, and trying cuts all
   // other sound, so the trick is used in Safari only.
   var STANDALONE = !!window.navigator.standalone;
-  var actx = null, silentAudio = null;
+  var actx = null, master = null, silentAudio = null;
+  function playBlank(ctx, rate) {
+    var buf = ctx.createBuffer(1, 1, rate), src = ctx.createBufferSource();
+    src.buffer = buf; src.connect(ctx.destination);
+    if (src.start) { src.start(0); } else { src.noteOn(0); }
+  }
   function unlockAudio() {
     if (!STANDALONE) try {
       if (!silentAudio) {
@@ -115,9 +120,21 @@
     if (!AC) { return; }
     if (!actx) {
       actx = new AC();
-      var buf = actx.createBuffer(1, 1, 22050), src = actx.createBufferSource();
-      src.buffer = buf; src.connect(actx.destination);
-      if (src.start) { src.start(0); } else { src.noteOn(0); }
+      // iOS bug: the sound engine sometimes starts at the wrong rate, which makes sound crackle.
+      // Playing a short buffer at 44100 Hz and starting again fixes the rate.
+      if (actx.sampleRate !== 44100 && actx.close) {
+        try { playBlank(actx, 44100); actx.close(); actx = new AC(); } catch (e) {}
+      }
+      playBlank(actx, 22050);
+      // Every sound goes through one volume control and a limiter, so many sounds at once
+      // never get too loud and distort.
+      master = actx.createGain(); master.gain.value = 0.8;
+      if (actx.createDynamicsCompressor) {
+        var comp = actx.createDynamicsCompressor();
+        comp.threshold.value = -14; comp.knee.value = 12; comp.ratio.value = 10;
+        comp.attack.value = 0.003; comp.release.value = 0.2;
+        master.connect(comp); comp.connect(actx.destination);
+      } else { master.connect(actx.destination); }
     }
     if (actx.state === 'suspended' && actx.resume) { actx.resume(); }
     loadRecordings();
@@ -132,11 +149,14 @@
     o.type = type || 'sine';
     o.frequency.setValueAtTime(freq, t);
     if (slideTo) { o.frequency.exponentialRampToValueAtTime(slideTo, t + dur); }
-    g.gain.setValueAtTime(0.0001, t);
-    g.gain.exponentialRampToValueAtTime(vol || 0.3, t + 0.02);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    o.connect(g); g.connect(actx.destination);
-    if (o.start) { o.start(t); o.stop(t + dur + 0.05); } else { o.noteOn(t); o.noteOff(t + dur + 0.05); }
+    // Soft start, smooth fade, and a final short slide to true silence before the sound stops
+    // (stopping while still faintly audible makes a click).
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(vol || 0.3, t + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    g.gain.linearRampToValueAtTime(0, t + dur + 0.03);
+    o.connect(g); g.connect(master);
+    if (o.start) { o.start(t); o.stop(t + dur + 0.08); } else { o.noteOn(t); o.noteOff(t + dur + 0.08); }
   }
   var SFX = {
     click: function () { tone(660, 0.08, 'sine', 0.2); },
@@ -173,7 +193,8 @@
   function say(text) {
     if (!window.speechSynthesis || !window.SpeechSynthesisUtterance) { return; }
     try {
-      window.speechSynthesis.cancel();
+      // Only cut the voice off if it is talking: cancelling for nothing can make a click.
+      if (window.speechSynthesis.speaking || window.speechSynthesis.pending) { window.speechSynthesis.cancel(); }
       var u = new SpeechSynthesisUtterance(text);
       u.lang = T().voice; u.rate = 0.85; u.pitch = 1.1;
       var v = bestVoice(); if (v) { u.voice = v; }
@@ -189,12 +210,13 @@
     { c: '1f42e', k: 'cow', f: 220 }, { c: '1f437', k: 'pig', f: 330 }, { c: '1f436', k: 'dog', f: 392 },
     { c: '1f431', k: 'cat', f: 523 }, { c: '1f411', k: 'sheep', f: 294 }, { c: '1f425', k: 'chick', f: 660 },
     { c: '1f438', k: 'frog', f: 196 }, { c: '1f981', k: 'lion', f: 147 }, { c: '1f435', k: 'monkey', f: 440 },
-    { c: '1f434', k: 'horse', f: 262 }, { c: '1f430', k: 'rabbit', f: 587 }, { c: '1f418', k: 'elephant', f: 131 },
+    { c: '1f434', k: 'horse', f: 262 }, { c: '1f413', k: 'rooster', f: 587 }, { c: '1f418', k: 'elephant', f: 131 },
     { c: '1f986', k: 'duck', f: 494 }, { c: '1f43b', k: 'bear', f: 165 }, { c: '1f989', k: 'owl', f: 349 }
   ];
   function aName(a) { return T().animals[a.k][0]; }
   // Real animal recordings (sounds/animals/*.mp3), decoded once and played with Web Audio.
-  var ANIMAL_REC = { cat: 1, cow: 1, dog: 1, elephant: 1, frog: 1, horse: 1, lion: 1, pig: 1, sheep: 1 };
+  var ANIMAL_REC = { cow: 1, pig: 1, dog: 1, cat: 1, sheep: 1, chick: 1, frog: 1, lion: 1, monkey: 1, horse: 1,
+    rooster: 1, elephant: 1, duck: 1, bear: 1, owl: 1 };
   var recBuf = {}, recLoading = false;
   function loadRecordings() {
     if (recLoading || !actx) { return; }
@@ -219,7 +241,7 @@
     try { if (recSrc) { if (recSrc.stop) { recSrc.stop(0); } else { recSrc.noteOff(0); } } } catch (e) {}
     var src = actx.createBufferSource(), g = actx.createGain();
     src.buffer = b; g.gain.value = 0.9;
-    src.connect(g); g.connect(actx.destination);
+    src.connect(g); g.connect(master);
     if (src.start) { src.start(0); } else { src.noteOn(0); }
     recSrc = src;
     return b.duration;
