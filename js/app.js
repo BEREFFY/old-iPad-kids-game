@@ -278,10 +278,14 @@
 
   // Memory themes (pictures).
   var THEMES = [
-    { icon: '1f436', items: ['1f42e', '1f437', '1f436', '1f431', '1f425', '1f438', '1f981', '1f435', '1f430', '1f418', '1f986', '1f43b'] },
-    { icon: '1f697', items: ['1f697', '1f68c', '1f692', '1f693', '1f69c', '1f682', '2708', '1f680', '1f6b2', '26f5', '1f681'] },
-    { icon: '1f34e', items: ['1f34e', '1f34c', '1f353', '1f349', '1f347', '1f955', '1f366', '1f36a', '1f382'] },
-    { icon: '1f388', items: ['1f388', '1f381', '26bd', '1f984', '1f41e', '1f98b', '1f420', '1f42c', '1f996', '1f451', '2b50', '2764'] }
+    { icon: '1f436', items: ['1f42e', '1f437', '1f436', '1f431', '1f425', '1f438', '1f981', '1f435', '1f430', '1f418', '1f986', '1f43b',
+      '1f411', '1f434', '1f989', '1f42f', '1f992', '1f427', '1f98a', '1f43c', '1f42d', '1f422'] },
+    { icon: '1f697', items: ['1f697', '1f68c', '1f692', '1f693', '1f69c', '1f682', '2708', '1f680', '1f6b2', '26f5', '1f681',
+      '1f695', '1f691', '1f69a', '1f6f5', '1f3ce', '1f6a2', '1f68b', '1f6fb', '1f6f4'] },
+    { icon: '1f34e', items: ['1f34e', '1f34c', '1f353', '1f349', '1f347', '1f955', '1f350', '1f34a', '1f352', '1f351', '1f34d',
+      '1f34b', '1f95d', '1f966', '1f33d', '1f952', '1f951', '1f346', '1f344', '1f34f', '1f965'] },
+    { icon: '1f420', items: ['1f420', '1f421', '1f42c', '1f433', '1f419', '1f980', '1f991', '1f422', '1f988', '1f41a', '1f99e',
+      '1f9ad', '1fab8', '1fabc', '1f427'] }
   ];
   // Paint stamp picker categories.
   var STAMP_CATS = [
@@ -393,7 +397,7 @@
     { id: 'paint', icon: '1f3a8', color: '#ff8a2a', color2: '#ffc15e', bg: '#fffdf8', levels: 1, scored: [0], noBar: true },
     { id: 'peek', icon: '1f648', color: '#ef4b6c', color2: '#ff9aa8', bg: '#ffeef3', levels: 3, scored: [0, 1, 1] },
     { id: 'piano', icon: '1f3b9', color: '#8f5ce0', color2: '#c39bff', bg: '#fff', levels: 3, scored: [0, 1, 1], chips: ['1f3b9', '2728', '1f31f'] },
-    { id: 'memory', icon: '1f0cf', color: '#ff5d9e', color2: '#ffa3c8', bg: '#fff1f6', levels: 4, scored: [1, 1, 1, 1] }
+    { id: 'memory', icon: '1f0cf', color: '#ff5d9e', color2: '#ffa3c8', bg: '#fff1f6', levels: 5, scored: [1, 1, 1, 1, 1], auto: 3 }
   ];
   function gameById(id) { for (var i = 0; i < GAMES.length; i++) { if (GAMES[i].id === id) { return GAMES[i]; } } return null; }
 
@@ -473,6 +477,7 @@
     var lv = $('gLevels');
     lv.innerHTML = '';
     lv.style.display = g.levels > 1 ? '' : 'none';
+    lv.className = 'levels' + (g.levels > 4 ? ' many' : '');
     for (var i = 0; i < g.levels; i++) {
       (function (i) {
         var c = el('div', 'chip' + (i === level ? ' sel' : ''), lv, g.chips ? img(g.chips[i], 34) : String(i + 1));
@@ -569,8 +574,11 @@
     onPress($('hGo'), function () { SFX.click(); if (window.speechSynthesis) { window.speechSynthesis.cancel(); } closeSheet(); });
   }
 
+  // Games with "auto": one big play button; after that many wins the next level starts by itself.
+  var autoWins = store('autoWins') || {};
   function showWin(stars) {
     saveBest(game.id, level, stars);
+    if (game.auto) { showAutoWin(stars); return; }
     SFX.fanfare();
     say(T().bravo);
     var h = sheetIcon('1f3c6', '#ffc93c') + '<h2>' + T().bravo + '</h2>' +
@@ -587,6 +595,32 @@
     onPress($('wMenu'), function () { SFX.click(); openMenu(); });
     onPress($('wAgain'), function () { SFX.click(); startLevel(level); });
     if ($('wNext')) { onPress($('wNext'), function () { SFX.click(); startLevel(level + 1); }); }
+  }
+
+  function showAutoWin(stars) {
+    var id = game.id, n = ((autoWins[id] && autoWins[id][level]) || 0) + 1;
+    var last = level >= game.levels - 1, levelUp = !last && n >= game.auto;
+    autoWins[id] = autoWins[id] || {};
+    autoWins[id][level] = levelUp ? 0 : n;
+    store('autoWins', autoWins);
+    SFX.fanfare();
+    say(praise());
+    var h = '<div class="bigstars" style="margin-top:6px">';
+    for (var i = 0; i < 3; i++) {
+      var s = star(i < stars).replace('rgba(255,255,255,0.55)', '#ece5f5');
+      h += s.replace('<svg', '<svg style="-webkit-animation-delay:' + (0.3 + i * 0.25) + 's;animation-delay:' + (0.3 + i * 0.25) + 's"');
+    }
+    h += '</div>';
+    if (!last) {
+      // Little dots: how many more games before the next level.
+      h += '<div class="lvdots">';
+      for (var d = 0; d < game.auto; d++) { h += '<span class="' + (levelUp || d < n ? 'on' : '') + '"></span>'; }
+      h += '</div>';
+    }
+    h += '<div class="gobtn' + (levelUp ? ' up' : '') + '" id="wGo" style="background:' + game.color + '">' + ICON.play + '</div>';
+    openSheet(h);
+    confetti();
+    onPress($('wGo'), function () { SFX.click(); startLevel(levelUp ? level + 1 : level); });
   }
 
   // Big in-game "listen again" button plus a row of progress stars.
@@ -1222,7 +1256,7 @@
       if (mode === 0) { return; }
       var pct = Math.round(pos / song.length * 100);
       var inf = api.info('<div class="pillw press" id="songBtn"><div class="fill" style="width:' + pct + '%"></div>' + img('1f3b5', 30) +
-        '<span style="max-width:230px;overflow:hidden;text-overflow:ellipsis">' + SONGS[songIdx].n[lang] + '</span><span style="margin-left:8px;opacity:.5">▾</span></div>');
+        '<span style="max-width:230px;overflow:hidden;text-overflow:ellipsis">' + SONGS[songIdx].n[lang] + '</span></div>');
       onPress(inf.querySelector('#songBtn'), openSongs);
     }
     function openSongs() {
@@ -1291,7 +1325,7 @@
   GAME_IMPL.memory = function (api) {
     var stage = api.stage;
     if (memTheme >= THEMES.length) { memTheme = 0; }
-    var pairs = [2, 3, 4, 6][api.level];
+    var pairs = [2, 3, 4, 6, 8][api.level];
     var items = shuffle(THEMES[memTheme].items).slice(0, pairs);
     var deck = [];
     each(items, function (x) { deck.push(x); deck.push(x); });
@@ -1301,7 +1335,7 @@
     var backStar = '<svg viewBox="0 0 24 24"><path fill="rgba(255,255,255,0.9)" d="M12 2.6l2.9 5.9 6.5.9-4.7 4.6 1.1 6.4L12 17.4l-5.8 3 1.1-6.4-4.7-4.6 6.5-.9z"/></svg>';
 
     function renderInfo() {
-      var inf = api.info('<div class="pillw press" id="themeBtn">' + img(THEMES[memTheme].icon, 30) + '<span>' + T().themes[memTheme] + '</span><span style="margin-left:8px;opacity:.5">▾</span></div>' +
+      var inf = api.info('<div class="pillw press" id="themeBtn">' + img(THEMES[memTheme].icon, 30) + '<span style="opacity:.5">▾</span></div>' +
         '<div class="pillw">' + img('2705', 30) + '<span>' + found + ' / ' + pairs + '</span></div>');
       onPress(inf.querySelector('#themeBtn'), function () {
         SFX.click();
@@ -1327,7 +1361,7 @@
       return null;
     }
     each(deck, function (code, n) {
-      var b = boxes[n], card = el('div', 'card face', stage, pic(code, b.s * 0.66));
+      var b = boxes[n], card = el('div', 'card back-side', stage, backStar);
       place(card, b.x, b.y, b.s, b.s);
       card.code = code; card.size = b.s;
       cards.push(card);
@@ -1346,8 +1380,9 @@
             addClass(c1, 'found'); addClass(c2, 'found');
             restartAnim(c1, 'bounce'); restartAnim(c2, 'bounce');
             SFX.good();
+            // A happy phrase, or sometimes the animal's real sound. Never its name.
             var an = animalFor(c1.code);
-            if (an) { animalHello(an); } else { say(praise()); }
+            if (an && recBuf[an.k] && Math.random() < 0.5) { animalSound(an); } else { say(praise()); }
             found++; renderInfo(); busy = false;
             if (found === pairs) {
               var s = moves <= pairs + 1 ? 3 : (moves <= pairs * 2 ? 2 : 1);
@@ -1365,9 +1400,17 @@
       });
     });
     renderInfo();
-    // Show all the cards for a moment, then turn them over.
-    say(T().look);
-    api.later(function () { each(cards, function (cd) { turn(cd, false); }); SFX.whoosh(); busy = false; }, 1400 + pairs * 350);
+    // Big play button. On tap: show all the cards for a moment, then turn them over.
+    var size = Math.min(190, api.h * 0.3);
+    var go = el('div', 'quest bigplay', stage, ICON.play);
+    go.style.background = api.color; go.style.zIndex = '5';
+    place(go, (api.w - size) / 2, (api.h - size) / 2, size, size);
+    onPress(go, function () {
+      if (go.parentNode) { stage.removeChild(go); } else { return; }
+      say(T().look);
+      each(cards, function (cd) { turn(cd, true); });
+      api.later(function () { each(cards, function (cd) { turn(cd, false); }); SFX.whoosh(); busy = false; }, 1600 + pairs * 350);
+    });
     return {};
   };
 

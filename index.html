@@ -120,6 +120,7 @@
   .levels { display: -webkit-flex; display: flex; margin-left: 10px; background: rgba(255,255,255,0.25); border-radius: 31px; padding: 5px; }
   .chip { min-width: 52px; height: 52px; border-radius: 26px; margin: 0 2px; font-size: 24px; font-weight: 600; color: #fff;
     display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; -webkit-justify-content: center; justify-content: center; }
+  .levels.many .chip { min-width: 44px; margin: 0 1px; }
   .chip.sel { background: #fff; -webkit-box-shadow: 0 3px 0 rgba(0,0,0,0.15); box-shadow: 0 3px 0 rgba(0,0,0,0.15); }
   .pillw { background: rgba(255,255,255,0.92); color: #3d2c4f; border-radius: 26px; height: 52px; padding: 0 16px; margin-left: 8px;
     display: -webkit-flex; display: flex; -webkit-align-items: center; align-items: center; white-space: nowrap; font-size: 21px; position: relative; overflow: hidden; }
@@ -179,6 +180,14 @@
     -webkit-box-shadow: 0 8px 0 rgba(0,0,0,0.15); box-shadow: 0 8px 0 rgba(0,0,0,0.15);
     -webkit-animation: pulse 1.6s ease-in-out infinite; animation: pulse 1.6s ease-in-out infinite; }
   .quest svg { position: absolute; left: 50%; top: 50%; width: 54%; height: 54%; -webkit-transform: translate(-50%,-50%); transform: translate(-50%,-50%); }
+  .bigplay svg { width: 50%; height: 50%; margin-left: 4%; }
+  .lvdots { margin: 6px 0 4px; }
+  .lvdots span { display: inline-block; width: 22px; height: 22px; border-radius: 11px; margin: 0 6px; background: #ece5f5; }
+  .lvdots span.on { background: #ffc93c; }
+  .gobtn { position: relative; width: 170px; height: 170px; border-radius: 85px; margin: 18px auto 6px; border: 7px solid #fff;
+    -webkit-box-shadow: 0 8px 0 rgba(0,0,0,0.18); box-shadow: 0 8px 0 rgba(0,0,0,0.18);
+    -webkit-animation: pulse 1.6s ease-in-out infinite; animation: pulse 1.6s ease-in-out infinite; }
+  .gobtn svg { position: absolute; left: 50%; top: 50%; width: 80px; height: 80px; margin: -40px 0 0 -34px; }
   .starsrow { position: absolute; display: -webkit-flex; display: flex; }
   .starsrow svg { width: 52px; height: 52px; margin: 0 3px; }
   .scorepill { position: absolute; background: rgba(255,255,255,0.92); border-radius: 30px; height: 60px; padding: 0 20px 0 12px; font-size: 26px; font-weight: 600;

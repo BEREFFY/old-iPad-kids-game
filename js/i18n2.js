@@ -5,7 +5,7 @@
       look: 'Regarde bien !',
       songsLabel: 'Chansons',
       themeLabel: 'Thème',
-      themes: ['Animaux', 'Véhicules', 'Fruits', 'Fête'],
+      themes: ['Animaux', 'Véhicules', 'Fruits & légumes', 'La mer'],
       peekLv: ['Coucou', 'Regarde et retiens', 'Suis l’animal'],
       help: {
         animals: [['Touche un animal : il dit son nom et son cri.'],
@@ -27,7 +27,7 @@
       look: 'Look carefully!',
       songsLabel: 'Songs',
       themeLabel: 'Theme',
-      themes: ['Animals', 'Vehicles', 'Fruit', 'Party'],
+      themes: ['Animals', 'Vehicles', 'Fruit & veg', 'The sea'],
       peekLv: ['Peekaboo', 'Look and remember', 'Follow the animal'],
       help: {
         animals: [['Tap an animal: it says its name and its sound.'],
@@ -49,7 +49,7 @@
       look: 'Schau genau hin!',
       songsLabel: 'Lieder',
       themeLabel: 'Thema',
-      themes: ['Tiere', 'Fahrzeuge', 'Obst', 'Party'],
+      themes: ['Tiere', 'Fahrzeuge', 'Obst & Gemüse', 'Das Meer'],
       peekLv: ['Kuckuck', 'Schau und merk es dir', 'Folge dem Tier'],
       help: {
         animals: [['Tippe auf ein Tier: Es sagt seinen Namen und macht sein Geräusch.'],
@@ -71,7 +71,7 @@
       look: 'Смотри внимательно!',
       songsLabel: 'Песни',
       themeLabel: 'Тема',
-      themes: ['Животные', 'Транспорт', 'Фрукты', 'Праздник'],
+      themes: ['Животные', 'Транспорт', 'Фрукты и овощи', 'Море'],
       peekLv: ['Ку-ку', 'Смотри и запоминай', 'Следи за животным'],
       help: {
         animals: [['Нажми на животное — оно скажет, как его зовут и как оно говорит.'],
