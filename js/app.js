@@ -369,6 +369,16 @@
     $('overlay').className = ''; overlayOpen = false;
     each($('overlay').querySelectorAll('.confetti'), function (c) { c.parentNode.removeChild(c); });
   }
+  // Tapping the dark area around a pop-up closes it (taps on the pop-up itself do not).
+  (function () {
+    var ov = $('overlay');
+    function outside(ev) {
+      var t = ev.target;
+      if (t === ov || (t.className && String(t.className).indexOf('confetti') >= 0)) { ev.preventDefault(); SFX.click(); closeSheet(); }
+    }
+    ov.addEventListener('touchend', outside, false);
+    ov.addEventListener('click', outside, false);
+  })();
   function confetti() {
     var ov = $('overlay');
     for (var i = 0; i < 36; i++) {
