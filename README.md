@@ -17,7 +17,7 @@ Live: https://bereffy.github.io/old-iPad-kids-game/
 
 Code is plain ES5 (no modern JavaScript) so it runs on Safari 9.
 
-Credits: pictures from [Twemoji](https://github.com/jdecked/twemoji) (© Twitter, Inc. and contributors, CC-BY 4.0).
+Credits: pictures from [Twemoji](https://github.com/jdecked/twemoji) (© Twitter, Inc. and contributors, CC-BY 4.0). The rooster picture is from [Noto Emoji](https://github.com/googlefonts/noto-emoji) (Google, Apache 2.0).
 Font: [Fredoka](https://fonts.google.com/specimen/Fredoka) (SIL Open Font License).
 
 ### Animal sounds
@@ -25,20 +25,22 @@ Font: [Fredoka](https://fonts.google.com/specimen/Fredoka) (SIL Open Font Licens
 Short cuts (trimmed and volume-levelled) of these recordings:
 
 - **cow**: [Cow Mooing](https://soundbible.com/215-Cow-Mooing.html), by Mike Koenig, Attribution 3.0
-- **pig**: [Pig Oinking](https://soundbible.com/1220-Pig-Oinking.html), by Mike Koenig, Attribution 3.0
+- **pig**: [pig-sound-effect](https://www.freesoundslibrary.com/pig-sound-effect/), by freesoundslibrary.com, CC BY 4.0
 - **dog**: [dog-bark-sound-effect](https://www.freesoundslibrary.com/dog-bark-sound-effect/), by freesoundslibrary.com, CC BY-NC 4.0
-- **cat**: [meow-cat-cartoon](https://www.freesoundslibrary.com/meow-cat-cartoon/), by freesoundslibrary.com, CC BY-NC 4.0
-- **sheep**: [sheep-baa-sound](https://www.freesoundslibrary.com/sheep-baa-sound/), by freesoundslibrary.com, CC BY 4.0
+- **cat**: [Cat Meowing](https://soundbible.com/1290-Cat-Meowing.html), by Mike Koenig, Attribution 3.0
+- **sheep**: [single-sheep-baa-sound](https://www.freesoundslibrary.com/single-sheep-baa-sound/), by freesoundslibrary.com, CC BY 4.0
 - **chick**: [baby-chicks-chirping](https://www.freesoundslibrary.com/baby-chicks-chirping/), by freesoundslibrary.com, CC BY 4.0
-- **rooster**: [Rooster Crowing](https://soundbible.com/1134-Rooster-Crowing.html), by Mike Koenig, Attribution 3.0
+- **rooster**: [Rooster Crow](https://soundbible.com/1218-Rooster-Crow.html), by Mike Koenig, Attribution 3.0
 - **frog**: [Croaking 2x](https://soundbible.com/1340-Croaking-2x.html), by snottyboy, Attribution 3.0
 - **lion**: [Lion Roar](https://soundbible.com/1282-Lion-Roar.html), by Mike Koenig, Attribution 3.0
-- **monkey**: [Chimpanzee](https://soundbible.com/1188-Chimpanzee.html), by Mike Koenig, Attribution 3.0
-- **horse**: [horse-neigh-sound](https://www.freesoundslibrary.com/horse-neigh-sound/), by freesoundslibrary.com, CC BY 4.0
+- **monkey**: [monkey-chatter-sound-effect](https://www.freesoundslibrary.com/monkey-chatter-sound-effect/), by freesoundslibrary.com, CC BY-NC 4.0
+- **horse**: [horse-whinny-sound-effect](https://www.freesoundslibrary.com/horse-whinny-sound-effect/), by freesoundslibrary.com, CC BY 4.0
 - **elephant**: [Elephant](https://soundbible.com/1140-Elephant.html), by Mike Koenig, Attribution 3.0
-- **duck**: [cartoon-duck-quack](https://www.freesoundslibrary.com/cartoon-duck-quack/), by freesoundslibrary.com, CC BY-NC 4.0
+- **duck**: [duck-quack](https://www.freesoundslibrary.com/duck-quack/), by freesoundslibrary.com, CC BY 4.0
 - **bear**: [bear-sounds](https://www.freesoundslibrary.com/bear-sounds/), by freesoundslibrary.com, CC BY 4.0
 - **owl**: [lone-owl-hooting-sound-effect](https://www.freesoundslibrary.com/lone-owl-hooting-sound-effect/), by freesoundslibrary.com, CC BY 4.0
+
+Pig and owl sounds are repeated (3x and 2x).
 
 Other candidates, playable on `sons.html` (files in `sounds/choices/`):
 
