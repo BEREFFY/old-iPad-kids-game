@@ -98,9 +98,12 @@
   // Web Audio on old iPads is treated as "ambient" sound and is silenced by the mute setting.
   // Playing a silent <audio> track in a loop moves the page to "media" sound (like YouTube),
   // which is not muted.
+  // From a home-screen icon (full screen) iOS 9 cannot play <audio>, and trying cuts all
+  // other sound, so the trick is used in Safari only.
+  var STANDALONE = !!window.navigator.standalone;
   var actx = null, silentAudio = null;
   function unlockAudio() {
-    try {
+    if (!STANDALONE) try {
       if (!silentAudio) {
         silentAudio = new Audio('sounds/silence.wav');
         silentAudio.loop = true;
